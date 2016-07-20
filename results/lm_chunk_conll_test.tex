@@ -1,0 +1,75 @@
+\documentclass[psamsfonts]{amsart}
+
+%-------Packages---------
+\usepackage{amssymb,amsfonts}
+\usepackage[all,arc]{xy}
+\usepackage{enumerate}
+\usepackage{mathrsfs}
+
+%--------Theorem Environments--------
+%theoremstyle{plain} --- default
+\newtheorem{thm}{Theorem}[section]
+\newtheorem{cor}[thm]{Corollary}
+\newtheorem{prop}[thm]{Proposition}
+\newtheorem{lem}[thm]{Lemma}
+\newtheorem{conj}[thm]{Conjecture}
+\newtheorem{quest}[thm]{Question}
+
+\theoremstyle{definition}
+\newtheorem{defn}[thm]{Definition}
+\newtheorem{defns}[thm]{Definitions}
+\newtheorem{con}[thm]{Construction}
+\newtheorem{exmp}[thm]{Example}
+\newtheorem{exmps}[thm]{Examples}
+\newtheorem{notn}[thm]{Notation}
+\newtheorem{notns}[thm]{Notations}
+\newtheorem{addm}[thm]{Addendum}
+\newtheorem{exer}[thm]{Exercise}
+
+\theoremstyle{remark}
+\newtheorem{rem}[thm]{Remark}
+\newtheorem{rems}[thm]{Remarks}
+\newtheorem{warn}[thm]{Warning}
+\newtheorem{sch}[thm]{Scholium}
+
+\makeatletter
+\let\c@equation\c@thm
+\makeatother
+\numberwithin{equation}{section}
+
+\bibliographystyle{plain}
+
+%--------Meta Data: Fill in your info------
+\title{Template for REU papers}
+
+\author{Your Name}
+
+\date{DEADLINES: Draft AUGUST 17 and Final version AUGUST 28, 2015}
+
+\begin{document}
+\begin{table}[t]
+	\begin{center}
+		\begin{tabular}{|l|c|c|c|}\cline{2-4}
+			\multicolumn{1}{l|}{Test set}
+        & Precision &  Recall  & F$_{\beta=1}$ \\\hline
+        ADJP    &   33.45\% &  43.09\% &  37.66 \\
+        ADVP    &   48.77\% &  52.72\% &  50.67 \\
+        CONJP   &   36.36\% &  44.44\% &  40.00 \\
+        INTJ    &    0.00\% &   0.00\% &   0.00 \\
+        LST     &    0.00\% &   0.00\% &   0.00 \\
+        NP      &   81.95\% &  84.42\% &  83.17 \\
+        PP      &   93.40\% &  95.71\% &  94.54 \\
+        PRT     &   64.29\% &  50.94\% &  56.84 \\
+        SBAR    &   77.88\% &  76.56\% &  77.22 \\
+        VP      &   73.97\% &  78.99\% &  76.40 \\\hline
+        Overall &   80.10\% &  83.36\% &  81.69 \\\hline
+\end{tabular}
+\end{center}
+\caption{
+	Results obtained using \texttt{states2} of LSTM trained on LM task to predict chunking tags on \texttt{CoNLL2000} task using feed-forward NN.
+} 
+\label{tab-final}
+\end{table}
+
+\end{document}
+

@@ -1,0 +1,57 @@
+name: Word Model with Shallow Grammar
+description: A 2x650 LSTM language model trained on the Wall Street Journal. Annotated with the CoNLL 2003 chunking and part-of-speech tag information.
+
+files:
+  states: states.h5
+  train: train.h5
+  words: words.dict
+  #  wc: kmeans.h5
+  tags : tags.h5
+  tags_dict: tags.dict
+  chunks : chunks.h5
+  chunks_dict: chunk.dict
+  ner : ner.h5
+  ner_dict: ner.dict
+
+
+
+word_sequence:
+  file: train
+  path: words
+  dict_file: words
+  offset: 0
+
+states:
+  file: states
+  types: [
+   {type: cell, layer: 1, path: states1},
+   {type: hidden, layer: 1, path: output1},
+   {type: cell, layer: 2, path: states2},
+   {type: hidden, layer: 2, path: output2}
+  ]
+
+meta:
+  tags:
+    file: tags
+    path: tags
+    dict: tags_dict
+    index: self
+    vis:
+      type: discrete
+      range: 0...9
+  chunks:
+    file: chunks
+    path: chunks
+    dict: chunks_dict
+    index: self
+    vis:
+      type: discrete
+      range: 0...9
+  named_entities:
+    file: ner
+    path: ner
+    dict: ner_dict
+    index: self
+    vis:
+      type: discrete
+      range: 0...9
