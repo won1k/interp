@@ -2,6 +2,7 @@
 require("hdf5")
 require("nn")
 require("optim")
+require 'cudnn';
 
 cmd = torch.CmdLine()
 
@@ -12,6 +13,7 @@ cmd:option('-networkfile', 'tempconv_word_network.t7', 'file to save network')
 cmd:option('-testfile', 'convert_word/dataval.h5', 'lstm states for test')
 cmd:option('-testoutfile', 'word_test_results.hdf5', 'output file for test')
 cmd:option('-ltweights', 'checkpoint/lstm_LT.h5', 'file containing LT weights')
+cmd:option('-gpu', 0, 'whether to use gpu')
 
 -- Hyperparameters
 cmd:option('-state_dim', 650, 'word embedding dimension')
@@ -22,7 +24,7 @@ cmd:option('-dhid', 300, 'hidden dimension')
 cmd:option('-dwin', 5, 'window size')
 
 -- Neural network model (no pretrained vectors)
-function NN(train_input, train_output, lt_weights, dwin, state_dim, lambda, epochs, bsize, dhid)
+function NN(train_input, train_output, lt_weights, dwin, state_dim, lambda, epochs, bsize, dhid, gpu)
 	local n = train_input:size()[1]
 
 	-- Initialize network
@@ -43,6 +45,13 @@ function NN(train_input, train_output, lt_weights, dwin, state_dim, lambda, epoc
 
 	-- Define criterion, initialize parameters
 	local criterion = nn.ClassNLLCriterion()
+
+	if gpu > 0 then
+		net:cuda()
+		LT:cuda()
+		temp:cuda()
+		criterion:cuda()
+	end
 
 	-- Train network
 	for t = 1, epochs do
@@ -81,10 +90,14 @@ function main()
     local bsize = opt.bsize
     local dhid = opt.dhid
 		local dwin = opt.dwin
+		local gpu = opt.gpu
 
     -- Load training data
     local train_input = f:read('target'):all():long()
     local train_output = g:read('chunks'):all():long()
+		if gpu > 0 then
+			train_input = train_input:cuda()
+	    train_output = train_output:cuda()
 		nfeatures = f:read('nfeatures'):all():long()[1]
 		nclasses = g:read('nclasses'):all():long()[1]
 
@@ -93,7 +106,7 @@ function main()
 		local lt_weights = h:read('weights'):all():double()
 
     -- Train.
-    local net = NN(train_input, train_output, lt_weights, dwin, state_dim, lambda, epochs, bsize, dhid)
+    local net = NN(train_input, train_output, lt_weights, dwin, state_dim, lambda, epochs, bsize, dhid, gpu)
 		torch.save(opt.networkfile, {dwin = dwin, nclasses = nclasses, state_dim = state_dim, network = net})
 
     -- Test.

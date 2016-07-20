@@ -2,6 +2,7 @@
 require("hdf5")
 require("nn")
 require("optim")
+require 'cudnn';
 
 cmd = torch.CmdLine()
 
@@ -12,6 +13,7 @@ cmd:option('-networkfile', 'tempconv_network.t7', 'file to save network')
 cmd:option('-testfile', 'checkpoint/lstm_states_val.h5', 'lstm states for test')
 cmd:option('-testtagfile', 'convert/test_parsed_chunks.hdf5', 'chunking tag file for test')
 cmd:option('-testoutfile', 'simple_test_results.hdf5', 'output file for test')
+cmd:option('-gpu', 0, 'whether to use gpu')
 
 -- Hyperparameters
 cmd:option('-state_dim', 650, 'LSTM state dimension')
@@ -21,19 +23,7 @@ cmd:option('-bsize', 32, 'mini-batch size')
 cmd:option('-dhid', 300, 'hidden dimension')
 cmd:option('-dwin', 5, 'window size')
 
--- LookupTable with pretrained features
-function PreLookup(train_input_word_windows, pretrained_features)
-	local n, dwin = train_input_word_windows:size()[1], train_input_word_windows:size()[2]
-	local dense_word_windows = torch.DoubleTensor(n, dwin, dpre)
-	for i = 1, n do
-		for j = 1, dwin do
-			dense_word_windows[i][j] = pretrained_features[train_input_word_windows[i][j]]
-		end
-	end
-	return dense_word_windows
-end
-
--- Neural network model (no pretrained vectors)
+-- Neural network model
 function NN(train_input, train_output, test_input, test_output, dwin, state_dim, lambda, epochs, bsize, dhid)
 	local n = train_input:size()[1]
 
@@ -48,12 +38,19 @@ function NN(train_input, train_output, test_input, test_output, dwin, state_dim,
 	local temp = nn.TemporalConvolution(state_dim, state_dim*dwin, dwin)
 	temp.bias = torch.zeros(state_dim*dwin)
 	temp.weight = torch.eye(state_dim*dwin)
-	local test_windowed = temp:forward(test_input):clone()
-	local test_len = test_windowed:size(1)
-	local test_output_windowed = test_output[{{torch.floor(dwin/2) + 1, test_len + torch.floor(dwin/2)}}]
 
 	-- Define criterion, initialize parameters
 	local criterion = nn.ClassNLLCriterion()
+
+	if gpu > 0 then
+		net:cuda()
+		temp:cuda()
+		criterion:cuda()
+	end
+
+	local test_windowed = temp:forward(test_input):clone()
+	local test_len = test_windowed:size(1)
+	local test_output_windowed = test_output[{{torch.floor(dwin/2) + 1, test_len + torch.floor(dwin/2)}}]
 
 	-- Train network
 	for t = 1, epochs do
@@ -99,16 +96,23 @@ function main()
     local bsize = opt.bsize
     local dhid = opt.dhid
 		local dwin = opt.dwin
+		local gpu = opt.gpu
 
     -- Load training data
     local train_input = f:read('states2'):all():double()
     local train_output = g:read('chunks'):all():long()
 		local test_input = h:read('states2'):all():double()
 		local test_output = j:read('chunks'):all():long()
+		if gpu > 0 then
+			train_input = train_input:cuda()
+	    train_output = train_output:cuda()
+			test_input = test_input:cuda()
+			test_output = test_output:cuda()
+		end
 		nclasses = g:read('nclasses'):all():long()[1]
 
     -- Train.
-    local net, test_windowed, test_output_windowed = NN(train_input, train_output, test_input, test_output, dwin, state_dim, lambda, epochs, bsize, dhid)
+    local net, test_windowed, test_output_windowed = NN(train_input, train_output, test_input, test_output, dwin, state_dim, lambda, epochs, bsize, dhid, gpu)
 		torch.save(opt.networkfile, {dwin = dwin, nclasses = nclasses, state_dim = state_dim, network = net})
 
     -- Test.
