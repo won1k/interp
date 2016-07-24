@@ -31,8 +31,12 @@ function data:__init(data_file)
    self.nfeatures = f:read('nfeatures'):all():long()[1]
    for i = 1, self.nlengths do
      local len = self.lengths[i]
-     self.input[len] = f:read(tostring(len)):all():long()
-     self.output[len] = f:read(tostring(len) .. "_output"):all():long()
+     self.input[len] = f:read(tostring(len)):all():double()
+     self.output[len] = f:read(tostring(len) .. "_output"):all():double()
+   end
+   if opt.gpu > 0 then
+     self.input:cuda()
+     self.output:cuda()
    end
    f:close()
 end
@@ -42,8 +46,8 @@ function data.__index(self, idx)
    if type(idx) == "string" then
       return data[idx]
    else
-      input = self.input[idx]:float()--:transpose(1,2):float()
-      output = self.output[idx]:float()
+      input = self.input[idx]--:transpose(1,2):float()
+      output = self.output[idx]
       --nn.SplitTable(2):forward(self.output[idx]:float()) -- sent_len table of batch_size
    end
    return {input, output}
@@ -79,6 +83,11 @@ function make_model(train_data, lt_weights)
 
   local criterion = nn.SequencerCriterion(nn.ClassNLLCriterion())
 
+  if opt.gpu > 0 then
+    model:cuda()
+    criterion:cuda()
+  end
+
   return model, criterion
 end
 
@@ -99,8 +108,8 @@ function train(train_data, test_data, model, criterion)
         for i = 1, torch.ceil(nsent / opt.bsize) do
           local start_idx = (i - 1) * opt.bsize
           local batch_size = math.min(i * opt.bsize, nsent) - start_idx -- batch_size x sentlen tensor
-          local train_input_mb = train_input[{{ start_idx + 1, start_idx + batch_size }}]:double() -- batch_size x sentlen
-          local train_output_mb = train_output[{{ start_idx + 1, start_idx + batch_size }}]:double():transpose(1,2)
+          local train_input_mb = train_input[{{ start_idx + 1, start_idx + batch_size }}] -- batch_size x sentlen
+          local train_output_mb = train_output[{{ start_idx + 1, start_idx + batch_size }}]:transpose(1,2)
           --train_output_mb = train_output_mb[{{}, { torch.floor(opt.dwin/2) + 1, sentlen - torch.floor(opt.dwin/2) }}]:transpose(1,2)
           criterion:forward(model:forward(train_input_mb), train_output_mb)
           model:zeroGradParameters()
@@ -127,7 +136,7 @@ function eval(data, model, criterion)
     local sentlen = data.lengths[i]
     if sentlen > opt.dwin then
       local len_data = data[sentlen]
-      local test_input, test_output = len_data[1]:double(), len_data[2]:double():transpose(1,2)
+      local test_input, test_output = len_data[1], len_data[2]:transpose(1,2)
       --test_output = test_output[{{}, { torch.floor(opt.dwin/2) + 1,
       --                                   sentlen - torch.floor(opt.dwin/2) }}]:transpose(1,2)
       nll = nll + criterion:forward(model:forward(test_input), test_output)
@@ -144,7 +153,7 @@ function predict(data, model)
     local sentlen = data.lengths[i]
     if sentlen > opt.dwin then
       local len_data = data[sentlen]
-      local test_input= len_data[1]
+      local test_input = len_data[1]
       local test_pred = model:forward(test_input)
       local maxval, maxidx = test_pred:max(2)
       maxidx = maxidx:squeeze()
