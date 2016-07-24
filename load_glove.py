@@ -46,6 +46,6 @@ with open('glove.6B/glove' + dim + '_full.dict', 'w') as f:
     for v, k in items:
         print >>f, k, v
 
-f = h5py.File('glove.6B/glove' + dim + '.hdf5', 'w')
+f = h5py.File('embeddings/glove' + dim + '.hdf5', 'w')
 f['weights'] = np.array(parsed_glove, dtype = np.float64)
 f.close()

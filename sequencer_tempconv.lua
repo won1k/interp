@@ -9,7 +9,7 @@ cmd:option('-datafile', 'convert_seq/data.hdf5', 'data file')
 cmd:option('-testfile', 'convert_seq/data_test.hdf5', 'raw words for test')
 cmd:option('-savefile', 'checkpoint_seq/word', 'output file for checkpoints')
 cmd:option('-testoutfile', 'seq_test_results.hdf5', 'output file for test')
-cmd:option('-ltweights', 'checkpoint/lstm_LT.h5', 'file containing LT weights')
+cmd:option('-ltweights', 'embeddings/lstm_LT.h5', 'file containing LT weights')
 cmd:option('-gpu', 0, 'whether to use gpu')
 
 -- Hyperparameters

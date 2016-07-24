@@ -12,7 +12,7 @@ cmd:option('-tagfile', 'convert/train_parsed_chunks.hdf5', 'chunking tag file')
 cmd:option('-networkfile', 'tempconv_network.t7', 'file to save network')
 cmd:option('-testfile', 'checkpoint/lstm_states_val.h5', 'lstm states for test')
 cmd:option('-testtagfile', 'convert/test_parsed_chunks.hdf5', 'chunking tag file for test')
-cmd:option('-testoutfile', 'simple_test_results.hdf5', 'output file for test')
+cmd:option('-testoutfile', 'test_results.hdf5', 'output file for test')
 cmd:option('-gpu', 0, 'whether to use gpu')
 
 -- Hyperparameters
