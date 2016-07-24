@@ -102,6 +102,8 @@ function train(train_data, test_data, model, criterion)
         print(sentlen)
         local len_data = train_data[sentlen] -- batch_size x sent_len, sentlen table of batch_size
         local train_input, train_output = len_data[1], len_data[2]
+        print(train_input:size())
+        print(train_output:size())
         local nsent = train_input:size(1)
         for i = 1, torch.ceil(nsent / opt.bsize) do
           local start_idx = (i - 1) * opt.bsize
