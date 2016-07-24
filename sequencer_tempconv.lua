@@ -108,14 +108,13 @@ function train(train_data, test_data, model, criterion)
           local batch_size = math.min(i * opt.bsize, nsent) - start_idx -- batch_size x sentlen tensor
           local train_input_mb = train_input[{{ start_idx + 1, start_idx + batch_size }}]:transpose(1,2) -- sentlen x batch_size
           local train_output_mb = train_output[{{ start_idx + 1, start_idx + batch_size }}]:transpose(1,2)
-          print(train_input_mb:size())
-          print(train_input_mb:size())
           train_input_mb = nn.SplitTable(1):forward(train_input_mb)
           train_output_mb = nn.SplitTable(1):forward(train_output_mb)
           --train_output_mb = train_output_mb[{{}, { torch.floor(opt.dwin/2) + 1, sentlen - torch.floor(opt.dwin/2) }}]:transpose(1,2)
           criterion:forward(model:forward(train_input_mb), train_output_mb)
           model:zeroGradParameters()
-          model:backward(train_input_mb, criterion:backward(model.output, train_output_mb))
+          criterion:backward(model.output, train_output_mb)
+          model:backward(train_input_mb, criterion.gradInput)
           LTgrad:zero()
           model:updateParameters(opt.lambda)
         end
