@@ -92,7 +92,7 @@ end
 function train(train_data, test_data, model, criterion)
   model:training()
   -- Get params to prevent LT weights update
-  local LTweights, LTgrad = model:get(2):get(1):get(1):get(1):getParameters()
+  local LTweights, LTgrad = model:get(1):get(1):get(1):getParameters()
   for t = 1, opt.epochs do
     print("Training epoch: " .. t)
     -- Assuming data is in format data[sentlen] = { nsent x sentlen tensor, nsent x 1 tensor }
