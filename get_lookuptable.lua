@@ -5,7 +5,7 @@ require 'hdf5'
 
 cmd = torch.CmdLine()
 cmd:option('-checkpoint_file','checkpoint/lm_epoch10.00_41.36.t7','path to model checkpoint file in t7 format')
-cmd:option('-output_file','checkpoint/lstm_LT.h5','path to output LSTM states in hdf5 format')
+cmd:option('-output_file','embeddings/lstm_LT.h5','path to output LSTM states in hdf5 format')
 cmd:option('-gpuid',-1,'which gpu to use. -1 = use CPU')
 opt = cmd:parse(arg)
 
