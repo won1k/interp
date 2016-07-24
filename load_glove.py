@@ -16,7 +16,7 @@ dim = args.dim
 idx = 1
 d = {}
 glove = []
-with open('glove.6B/glove.6B.' + dim + 'd.txt', 'r') as f:
+with open('glove/glove.6B.' + dim + 'd.txt', 'r') as f:
     for line in f:
         line = line.strip().split(' ')
         d[line[0]] = idx
@@ -40,7 +40,7 @@ for i in range(len(parsed_dict)):
     except:
         parsed_glove.append(mean_embedding)
 
-with open('glove.6B/glove' + dim + '_full.dict', 'w') as f:
+with open('glove/glove' + dim + '_full.dict', 'w') as f:
     items = [(k, v) for k, v in d.iteritems()]
     items.sort()
     for v, k in items:
