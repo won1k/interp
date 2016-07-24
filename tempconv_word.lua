@@ -2,7 +2,6 @@
 require("hdf5")
 require("nn")
 require("optim")
-require 'cudnn';
 
 cmd = torch.CmdLine()
 
@@ -10,7 +9,7 @@ cmd = torch.CmdLine()
 cmd:option('-datafile', 'convert_word/data.hdf5', 'data file')
 cmd:option('-tagfile', 'convert_word/train_parsed_chunks.hdf5', 'chunking tag file')
 cmd:option('-networkfile', 'tempconv_word_network.t7', 'file to save network')
-cmd:option('-testfile', 'convert_word/dataval.h5', 'lstm states for test')
+cmd:option('-testfile', 'convert_word/dataval.hdf5', 'raw words for test')
 cmd:option('-testoutfile', 'word_test_results.hdf5', 'output file for test')
 cmd:option('-ltweights', 'checkpoint/lstm_LT.h5', 'file containing LT weights')
 cmd:option('-gpu', 0, 'whether to use gpu')
@@ -96,8 +95,10 @@ function main()
     local train_input = f:read('target'):all():long()
     local train_output = g:read('chunks'):all():long()
 		if gpu > 0 then
+			require 'cudnn';
 			train_input = train_input:cuda()
 	    train_output = train_output:cuda()
+		end
 		nfeatures = f:read('nfeatures'):all():long()[1]
 		nclasses = g:read('nclasses'):all():long()[1]
 
