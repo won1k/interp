@@ -136,7 +136,9 @@ function eval(data, model, criterion)
     local sentlen = data.lengths[i]
     if sentlen > opt.dwin then
       local len_data = data[sentlen]
-      local test_input, test_output = len_data[1], len_data[2]:transpose(1,2)
+      local test_input, test_output = len_data[1]:transpose(1,2), len_data[2]:transpose(1,2)
+      test_input = nn.SplitTable(1):forward(test_input)
+      test_output = nn.SplitTable(1):forward(test_output)
       --test_output = test_output[{{}, { torch.floor(opt.dwin/2) + 1,
       --                                   sentlen - torch.floor(opt.dwin/2) }}]:transpose(1,2)
       nll = nll + criterion:forward(model:forward(test_input), test_output)
@@ -153,7 +155,8 @@ function predict(data, model)
     local sentlen = data.lengths[i]
     if sentlen > opt.dwin then
       local len_data = data[sentlen]
-      local test_input = len_data[1]
+      local test_input = len_data[1]:transpose(1,2)
+      test_input = nn.SplitTable(1):forward(test_input)
       local test_pred = model:forward(test_input)
       local maxval, maxidx = test_pred:max(2)
       maxidx = maxidx:squeeze()
