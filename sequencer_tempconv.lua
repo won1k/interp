@@ -54,7 +54,7 @@ function data.__index(self, idx)
 end
 
 function make_model(train_data, lt_weights)
-  local model = nn.Sequential()
+  --local model = nn.Sequential()
   local LT = nn.LookupTable(lt_weights:size(1), lt_weights:size(2))
   LT.weight = lt_weights
   --model:add(LT)
@@ -65,8 +65,7 @@ function make_model(train_data, lt_weights)
   seq:add(nn.HardTanh())
   seq:add(nn.Linear(opt.dhid, train_data.nclasses)) -- batch_size x nclasses
   seq:add(nn.LogSoftMax())
-  local r = nn.Sequencer(seq)
-  model:add(r)
+  local model = nn.Sequencer(seq)
   model:remember('both')
 
   --local LT = nn.LookupTable(lt_weights:size(1), lt_weights:size(2))
