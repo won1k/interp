@@ -59,7 +59,6 @@ function make_model(train_data, lt_weights)
   LT.weight = lt_weights
   --model:add(LT)
   --model:add(nn.TemporalConvolution(lt_weights:size(2), opt.dhid, opt.dwin))
-  model:add(nn.Transpose({1,2})) -- sent_len x batch_size
   local seq = nn.Sequential()
   seq:add(LT) -- batch_size x state_dim
   seq:add(nn.Linear(lt_weights:size(2), opt.dhid)) -- batch_size x hid_dim
@@ -108,8 +107,10 @@ function train(train_data, test_data, model, criterion)
         for i = 1, torch.ceil(nsent / opt.bsize) do
           local start_idx = (i - 1) * opt.bsize
           local batch_size = math.min(i * opt.bsize, nsent) - start_idx -- batch_size x sentlen tensor
-          local train_input_mb = train_input[{{ start_idx + 1, start_idx + batch_size }}] -- batch_size x sentlen
+          local train_input_mb = train_input[{{ start_idx + 1, start_idx + batch_size }}]:transpose(1,2) -- sentlen x batch_size
           local train_output_mb = train_output[{{ start_idx + 1, start_idx + batch_size }}]:transpose(1,2)
+          train_input_mb = nn.SplitTable(1):forward(train_input_mb)
+          train_output_mb = nn.SplitTable(1):forward(train_output_mb)
           --train_output_mb = train_output_mb[{{}, { torch.floor(opt.dwin/2) + 1, sentlen - torch.floor(opt.dwin/2) }}]:transpose(1,2)
           criterion:forward(model:forward(train_input_mb), train_output_mb)
           model:zeroGradParameters()
