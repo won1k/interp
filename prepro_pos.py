@@ -1,118 +1,79 @@
 #!/usr/bin/env python
 
-"""Create the data for the LSTM.
+"""Part-Of-Speech Preprocessing
 """
 
-import os
-import sys
-import argparse
-import numpy
+import numpy as np
 import h5py
-import itertools
+import argparse
+import sys
+import re
+import codecs
+import csv
 
+# Your preprocessing, features construction, and word2vec code.
+def get_tags(tagfile):
+    """
+    Construct POS tags dictionary.
+    """
+    tag_to_idx = {}
+    with open(tagfile, 'r') as f:
+        idx = 1
+        tags = f.read().split()
+        for tag in tags:
+            if tag not in tag_to_idx:
+                tag_to_idx[tag] = idx
+                idx += 1
+    return tag_to_idx
 
-class Indexer:
-    def __init__(self):
-        self.counter = 1
-        self.d = {}
-        self.rev = {}
-        self._lock = False
+def convert_data(tagfile, tag_to_idx):
+    """
+    Convert data to tags.
+    """
+    tag_indices = []
+    with open(tagfile, 'r') as f:
+        tags = f.read().split()
+        for tag in tags:
+            tag_indices.append(tag_to_idx[tag])
+    return np.array(tag_indices, dtype = np.int32)
 
-    def convert(self, w):
-        if w not in self.d:
-            if self._lock:
-                return self.d["<unk>"]
-            self.d[w] = self.counter
-            self.rev[self.counter] = w
-            self.counter += 1
-        return self.d[w]
-
-    def lock(self):
-        self._lock = True
-
-    def write(self, outfile):
-        out = open(outfile, "w")
-        items = [(v, k) for k, v in self.d.iteritems()]
-        items.sort()
-        for v, k in items:
-            print >>out, k, v
-        out.close()
-
-def get_data(args):
-    target_indexer = Indexer()
-    #add special words to indices in the target_indexer
-    target_indexer.convert("<s>")
-    target_indexer.convert("<unk>")
-    target_indexer.convert("</s>")
-
-    def parse_chunking(rawfile, targetfile):
-        words = []
-        postags = []
-        chunktags = []
-        for row in rawfile:
-            row = row.split()
-            if len(row) > 0:
-                words.append(row[0])
-                postags.append(row[1])
-                chunktags.append(row[2])
-            else:
-                words.append('\n')
-                postags.append('END')
-                chunktags.append('END')
-        with open(targetfile, 'w') as f:
-            f.write(' '.join(words))
-        with open(targetfile.split('.')[0] + '_pos.txt', 'w') as f:
-            f.write(' '.join(postags))
-        with open(targetfile.split('.')[0] + '_chunks.txt', 'w') as f:
-            f.write(' '.join(chunktags))
-
-    def convert(targetfile, outfile):
-        words = []
-        wordschar = []
-        targets = []
-        for i, targ_orig in enumerate(targetfile):
-            targ_orig = targ_orig.replace("<eos>", "")
-            targ = targ_orig.strip().split() + ["</s>"]
-            target_sent = [target_indexer.convert(w) for w in targ]
-            words += target_sent
-        targ_output = numpy.array(words[1:] + [target_indexer.convert("</s>")])
-        words = numpy.array(words, dtype = int)
-        print (words.shape, "shape of the word array before preprocessing")
-        # Write output.
-        f = h5py.File(outfile, "w")
-        f["target"] = numpy.array(words, dtype = int)
-        f["target_output"] = numpy.array(targ_output, dtype = int)
-        f["nfeatures"] = numpy.array([target_indexer.counter - 1], dtype = int)
-
-    if args.parsed == 0:
-        parse_chunking(args.rawfile, args.targetfile)
-        parse_chunking(args.rawtestfile, args.targetvalfile)
-        args.targetfile = open(args.targetfile, 'r')
-        args.targetvalfile = open(args.targetvalfile, 'r')
-    convert(args.targetfile, args.outputfile + ".hdf5")
-    target_indexer.lock()
-    convert(args.targetvalfile, args.outputfile + "val" + ".hdf5")
-    target_indexer.write(args.outputfile + ".targ.dict")
+args = {}
 
 def main(arguments):
+    global args
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument('rawfile', help="Raw chunking text file",
-                        type=argparse.FileType('r')) # train.txt
-    parser.add_argument('rawtestfile', help="Raw chunking test text file",
-                        type=argparse.FileType('r')) # test.txt
-    parser.add_argument('parsed', help="Whether raw file or already parsed",
-                        type=int)
-    parser.add_argument('targetfile', help="Target Input file") # convert_word/train_parsed.txt
-    parser.add_argument('targetvalfile', help="Target Input Validation file") # convert_word/test_parsed.txt
-    parser.add_argument('outputfile', help="HDF5 output file",
-                        type=str) # convert_word/data
+    parser.add_argument('tagfile', help = "File containing chunking tags", type = str) #convert/train_parsed_pos.txt
+    parser.add_argument('test', help = 'Whether testing tags', type = int)
+    parser.add_argument('dictfile', help = 'Dict to use if testing', type = str) #convert/train_parsed_pos.dict
     args = parser.parse_args(arguments)
-    if args.parsed > 0:
-        args.targetfile = open(args.targetfile, 'r')
-        args.targetvalfile = open(args.targetvalfile, 'r')
-    get_data(args)
+    tagfile = args.tagfile
+
+    # Get word dict
+    if args.test > 0:
+        tag_to_idx = {}
+        with open(args.dictfile, 'r') as f:
+            f = csv.reader(f, delimiter = ' ')
+            for row in f:
+                tag_to_idx[row[0]] = row[1]
+    else:
+        tag_to_idx = get_tags(tagfile)
+        with open(tagfile.split('.')[0] + '.dict','w') as f:
+            csvfile = csv.writer(f, delimiter = ' ')
+            for key, val in tag_to_idx.iteritems():
+                csvfile.writerow([key, val])
+    nclasses = len(tag_to_idx)
+
+    # Dataset name
+    pos_tags = convert_data(tagfile, tag_to_idx)
+
+    print("Converted, saving...")
+    # Output data
+    filename = args.tagfile.split('.')[0] + '.hdf5'
+    with h5py.File(filename, "w") as f:
+        f['tags'] = pos_tags
+        f['nclasses'] = np.array([nclasses], dtype = np.int32)
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))

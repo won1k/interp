@@ -2,7 +2,6 @@
 require("hdf5")
 require("nn")
 require("optim")
-require 'cudnn';
 
 cmd = torch.CmdLine()
 
@@ -17,11 +16,25 @@ cmd:option('-gpu', 0, 'whether to use gpu')
 
 -- Hyperparameters
 cmd:option('-state_dim', 650, 'LSTM state dimension')
-cmd:option('-lambda', 0.01, 'learning rate')
+cmd:option('-lambda', 1, 'learning rate')
 cmd:option('-epochs', 30, 'epochs')
 cmd:option('-bsize', 32, 'mini-batch size')
 cmd:option('-dhid', 300, 'hidden dimension')
 cmd:option('-dwin', 5, 'window size')
+
+function eval(test_input, test_output, net)
+	local n = test_input:size(1)
+	local test_pred = net:forward(test_input)
+	local maxval, maxidx = test_pred:max(2)
+	maxidx = maxidx:squeeze()
+	local accuracy = 0
+	for i = 1, n do
+		if maxidx[i] == test_output[i] then
+			accuracy = accuracy + 1
+		end
+	end
+	return accuracy/n
+end
 
 -- Neural network model
 function NN(train_input, train_output, test_input, test_output, dwin, state_dim, lambda, epochs, bsize, dhid)
@@ -42,7 +55,7 @@ function NN(train_input, train_output, test_input, test_output, dwin, state_dim,
 	-- Define criterion, initialize parameters
 	local criterion = nn.ClassNLLCriterion()
 
-	if gpu > 0 then
+	if opt.gpu > 0 then
 		net:cuda()
 		temp:cuda()
 		criterion:cuda()
@@ -73,9 +86,8 @@ function NN(train_input, train_output, test_input, test_output, dwin, state_dim,
 
 		print("Testing...")
 		-- Validation
-		local val_err = criterion:forward(net:forward(test_windowed), test_output_windowed)
-		print("Validation error: " .. val_err)
-		print("Perplexity: " .. math.exp(val_err / test_len))
+		local val_acc = eval(test_windowed, test_output_windowed, net)
+		print("Validation accuracy: " .. val_acc)
 	end
 
 	return net, test_windowed, test_output_windowed
@@ -96,14 +108,13 @@ function main()
     local bsize = opt.bsize
     local dhid = opt.dhid
 		local dwin = opt.dwin
-		local gpu = opt.gpu
 
     -- Load training data
     local train_input = f:read('states2'):all():double()
-    local train_output = g:read('chunks'):all():long()
+    local train_output = g:read('tags'):all():long()
 		local test_input = h:read('states2'):all():double()
-		local test_output = j:read('chunks'):all():long()
-		if gpu > 0 then
+		local test_output = j:read('tags'):all():long()
+		if opt.gpu > 0 then
 			train_input = train_input:cuda()
 	    train_output = train_output:cuda()
 			test_input = test_input:cuda()

@@ -4,7 +4,7 @@
 
 ## LSTM
 
-1) prepro.py train.txt test.txt 0 convert/train_parsed.txt convert/test_parsed.txt 20 35 convert/datanew
+1) prepro.py train.txt test.txt 0 convert/train_parsed.txt convert/test_parsed.txt 20 35 convert/data
 2) model.lua [ >> checkpoint/lm_... ]
 3) get_states.lua [ >> checkpoint/lstm_states.h5 ]
 4) get_lookuptable.lua [ >> embeddings/lstm_LT.h5 ]

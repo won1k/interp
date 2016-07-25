@@ -72,7 +72,7 @@ def main(arguments):
     # Output data
     filename = args.tagfile.split('.')[0] + '.hdf5'
     with h5py.File(filename, "w") as f:
-        f['chunks'] = chunk_tags
+        f['tags'] = chunk_tags
         f['nclasses'] = np.array([nclasses], dtype = np.int32)
 
 if __name__ == '__main__':
