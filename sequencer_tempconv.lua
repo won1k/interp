@@ -34,10 +34,10 @@ function data:__init(data_file)
      self.input[len] = f:read(tostring(len)):all():double()
      self.output[len] = f:read(tostring(len) .. "_output"):all():double()
    end
-   if opt.gpu > 0 then
-     self.input:cuda()
-     self.output:cuda()
-   end
+   --if opt.gpu > 0 then
+    -- self.input:cuda()
+  --   self.output:cuda()
+   --end
    f:close()
 end
 
@@ -53,20 +53,34 @@ function data.__index(self, idx)
    return {input, output}
 end
 
-function make_model(train_data, lt_weights)
-  --local model = nn.Sequential()
+function make_model(train_data, lt_weights) -- batch_size x sentlen tensor input
+  local model = nn.Sequential()
   local LT = nn.LookupTable(lt_weights:size(1), lt_weights:size(2))
   LT.weight = lt_weights
-  --model:add(LT)
-  --model:add(nn.TemporalConvolution(lt_weights:size(2), opt.dhid, opt.dwin))
+  model:add(LT) -- batch_size x sentlen x state_dim
+  local temp = nn.Sequential()
+  temp:add(nn.SplitTable(1)) -- batch_size table of sentlen x state_dim
+  temp:add(nn.TemporalConvolution(lt_weights:size(2), opt.dhid, opt.dwin)) -- batch_size table of (sent_len - 4) x hid_dim
+  temp:add(nn.Reshape(opt.dhid, 1, true)) -- batch_size table of (sent_len - 4) x hid_dim x 1
+  temp:add(nn.JoinTable(3)) -- (sent_len - 4) x hid_dim x batch_size
+  model:add(temp)
+  model:add(nn.Transpose({2,3})) -- (sent_len - 4) x batch_size x hid_dim
+  model:add(nn.SplitTable(1)) -- (sent_len - 4) table of batch_size x hid_dim
   local seq = nn.Sequential()
-  seq:add(LT) -- batch_size x state_dim
-  seq:add(nn.Linear(lt_weights:size(2), opt.dhid)) -- batch_size x hid_dim
   seq:add(nn.HardTanh())
-  seq:add(nn.Linear(opt.dhid, train_data.nclasses)) -- batch_size x nclasses
+  seq:add(nn.Linear(opt.dhid, train_data.nclasses))
   seq:add(nn.LogSoftMax())
-  local model = nn.Sequencer(seq)
+  model:add(nn.Sequencer(seq))
   model:remember('both')
+
+  --local seq = nn.Sequential()
+  --seq:add(LT) -- batch_size x state_dim
+  --seq:add(nn.Linear(lt_weights:size(2), opt.dhid)) -- batch_size x hid_dim
+  --seq:add(nn.HardTanh())
+  --seq:add(nn.Linear(opt.dhid, train_data.nclasses)) -- batch_size x nclasses
+  --seq:add(nn.LogSoftMax())
+  --local model = nn.Sequencer(seq)
+  --model:remember('both')
 
   --local LT = nn.LookupTable(lt_weights:size(1), lt_weights:size(2))
   --LT.weight = lt_weights
@@ -81,10 +95,10 @@ function make_model(train_data, lt_weights)
 
   local criterion = nn.SequencerCriterion(nn.ClassNLLCriterion())
 
-  if opt.gpu > 0 then
-    model:cuda()
-    criterion:cuda()
-  end
+  --if opt.gpu > 0 then
+  --  model:cuda()
+  --  criterion:cuda()
+  --end
 
   return model, criterion
 end
@@ -92,25 +106,23 @@ end
 function train(train_data, test_data, model, criterion)
   model:training()
   -- Get params to prevent LT weights update
-  local LTweights, LTgrad = model:get(1):get(1):get(1):getParameters()
+  local LTweights, LTgrad = model:get(1):getParameters()
   for t = 1, opt.epochs do
     print("Training epoch: " .. t)
-    -- Assuming data is in format data[sentlen] = { nsent x sentlen tensor, nsent x 1 tensor }
+    -- Assuming data is in format data[sentlen] = { nsent x sentlen tensor, nsent x sentlen tensor }
     for i = 1, train_data.nlengths do
       local sentlen = train_data.lengths[i]
       if sentlen > opt.dwin then
         print(sentlen)
-        local len_data = train_data[sentlen] -- batch_size x sent_len, sentlen table of batch_size
+        local len_data = train_data[sentlen] -- 2 table of nsent x sentlen
         local train_input, train_output = len_data[1], len_data[2]
         local nsent = train_input:size(1)
         for i = 1, torch.ceil(nsent / opt.bsize) do
           local start_idx = (i - 1) * opt.bsize
-          local batch_size = math.min(i * opt.bsize, nsent) - start_idx -- batch_size x sentlen tensor
-          local train_input_mb = train_input[{{ start_idx + 1, start_idx + batch_size }}]:transpose(1,2) -- sentlen x batch_size
-          local train_output_mb = train_output[{{ start_idx + 1, start_idx + batch_size }}]:transpose(1,2)
-          train_input_mb = nn.SplitTable(1):forward(train_input_mb)
-          train_output_mb = nn.SplitTable(1):forward(train_output_mb)
-          --train_output_mb = train_output_mb[{{}, { torch.floor(opt.dwin/2) + 1, sentlen - torch.floor(opt.dwin/2) }}]:transpose(1,2)
+          local batch_size = math.min(i * opt.bsize, nsent) - start_idx
+          local train_input_mb = train_input[{{ start_idx + 1, start_idx + batch_size }}] -- batch_size x sentlen tensor
+          local train_output_mb = train_output[{{ start_idx + 1, start_idx + batch_size }}]
+
           criterion:forward(model:forward(train_input_mb), train_output_mb)
           model:zeroGradParameters()
           model:backward(train_input_mb, criterion:backward(model.output, train_output_mb))
@@ -136,16 +148,17 @@ function eval(data, model, criterion)
     local sentlen = data.lengths[i]
     if sentlen > opt.dwin then
       local len_data = data[sentlen]
-      local test_input, test_output = len_data[1]:transpose(1,2), len_data[2]:transpose(1,2)
-      test_input = nn.SplitTable(1):forward(test_input)
-      test_output = nn.SplitTable(1):forward(test_output)
+      local test_input, test_output = len_data[1], len_data[2]
+      local batch_size = test_input:size(1)
       --test_output = test_output[{{}, { torch.floor(opt.dwin/2) + 1,
       --                                   sentlen - torch.floor(opt.dwin/2) }}]:transpose(1,2)
-      nll = nll + criterion:forward(model:forward(test_input), test_output)
+      nll = nll + criterion:forward(model:forward(test_input), test_output) * batch_size
+      total = total + sentlen * batch_Size
     end
   end
-  print('Validation error', nll)
-  return nll
+  local valid = math.exp(nll / total)
+  print('Validation error', valid)
+  return valid
 end
 
 function predict(data, model)
@@ -155,8 +168,7 @@ function predict(data, model)
     local sentlen = data.lengths[i]
     if sentlen > opt.dwin then
       local len_data = data[sentlen]
-      local test_input = len_data[1]:transpose(1,2)
-      test_input = nn.SplitTable(1):forward(test_input)
+      local test_input = len_data[1]
       local test_pred = model:forward(test_input)
       local maxval, maxidx = test_pred:max(2)
       maxidx = maxidx:squeeze()
