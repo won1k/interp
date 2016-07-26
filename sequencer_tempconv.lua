@@ -34,10 +34,11 @@ function data:__init(data_file)
      self.input[len] = f:read(tostring(len)):all():double()
      self.output[len] = f:read(tostring(len) .. "_output"):all():double()
    end
-   --if opt.gpu > 0 then
-    -- self.input:cuda()
-  --   self.output:cuda()
-   --end
+   if opt.gpu > 0 then
+     require 'cudnn';
+     self.input:cuda()
+     self.output:cuda()
+   end
    f:close()
 end
 
@@ -60,12 +61,13 @@ function make_model(train_data, lt_weights) -- batch_size x sentlen tensor input
   model:add(LT) -- batch_size x sentlen x state_dim
   local temp = nn.Sequential()
   temp:add(nn.SplitTable(1)) -- batch_size table of sentlen x state_dim
-  temp:add(nn.TemporalConvolution(lt_weights:size(2), opt.dhid, opt.dwin)) -- batch_size table of (sent_len - 4) x hid_dim
-  temp:add(nn.Reshape(opt.dhid, 1, true)) -- batch_size table of (sent_len - 4) x hid_dim x 1
+  local temp_seq = nn.Sequential()
+  temp_seq:add(nn.TemporalConvolution(lt_weights:size(2), opt.dhid, opt.dwin)) -- batch_size table of (sent_len - 4) x hid_dim
+  temp_seq:add(nn.Reshape(opt.dhid, 1, true)) -- batch_size table of (sent_len - 4) x hid_dim x 1
+  temp:add(nn.Sequencer(temp_seq))
   temp:add(nn.JoinTable(3)) -- (sent_len - 4) x hid_dim x batch_size
   model:add(temp)
   model:add(nn.Transpose({2,3})) -- (sent_len - 4) x batch_size x hid_dim
-  model:add(nn.SplitTable(1)) -- (sent_len - 4) table of batch_size x hid_dim
   local seq = nn.Sequential()
   seq:add(nn.HardTanh())
   seq:add(nn.Linear(opt.dhid, train_data.nclasses))
@@ -95,10 +97,10 @@ function make_model(train_data, lt_weights) -- batch_size x sentlen tensor input
 
   local criterion = nn.SequencerCriterion(nn.ClassNLLCriterion())
 
-  --if opt.gpu > 0 then
-  --  model:cuda()
-  --  criterion:cuda()
-  --end
+  if opt.gpu > 0 then
+    model:cuda()
+    criterion:cuda()
+  end
 
   return model, criterion
 end
@@ -121,7 +123,9 @@ function train(train_data, test_data, model, criterion)
           local start_idx = (i - 1) * opt.bsize
           local batch_size = math.min(i * opt.bsize, nsent) - start_idx
           local train_input_mb = train_input[{{ start_idx + 1, start_idx + batch_size }}] -- batch_size x sentlen tensor
-          local train_output_mb = train_output[{{ start_idx + 1, start_idx + batch_size }}]
+          local train_output_mb = train_output[{{ start_idx + 1, start_idx + batch_size }}] -- batch_size x sentlen
+          train_output_mb = train_output_mb[{{}, {torch.floor(opt.dwin/2) + 1,
+                                                  sentlen - torch.floor(opt.dwin/2) }}]:transpose(1,2)
 
           criterion:forward(model:forward(train_input_mb), train_output_mb)
           model:zeroGradParameters()
@@ -150,10 +154,10 @@ function eval(data, model, criterion)
       local len_data = data[sentlen]
       local test_input, test_output = len_data[1], len_data[2]
       local batch_size = test_input:size(1)
-      --test_output = test_output[{{}, { torch.floor(opt.dwin/2) + 1,
-      --                                   sentlen - torch.floor(opt.dwin/2) }}]:transpose(1,2)
+      test_output = test_output[{{}, { torch.floor(opt.dwin/2) + 1,
+                                         sentlen - torch.floor(opt.dwin/2) }}]:transpose(1,2)
       nll = nll + criterion:forward(model:forward(test_input), test_output) * batch_size
-      total = total + sentlen * batch_Size
+      total = total + sentlen * batch_size
     end
   end
   local valid = math.exp(nll / total)
