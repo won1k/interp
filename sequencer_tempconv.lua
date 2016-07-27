@@ -131,7 +131,7 @@ function train(train_data, test_data, model, criterion)
               { batch_idx + 1, batch_idx + batch_size },
               { seq_idx + torch.floor(opt.dwin/2) + 1, seq_idx + sequence_len - torch.floor(opt.dwin/2)}}]:transpose(1,2)
               -- batch_size x (sequence_len - 4)
-            train_output_mb = nn.SplitTable(2) -- (sequence_len - 4) table of batch_size
+            train_output_mb = nn.SplitTable(2):forward(train_output_mb) -- (sequence_len - 4) table of batch_size
 
             criterion:forward(model:forward(train_input_mb), train_output_mb)
             model:zeroGradParameters()
