@@ -136,8 +136,8 @@ function train(train_data, test_data, model, criterion)
             criterion:forward(model:forward(train_input_mb), train_output_mb)
             model:zeroGradParameters()
             print(train_input_mb:size())
-            print(model.output:size())
-            print(train_output_mb:size())
+            print(model.output[1]:size())
+            print(train_output_mb[1]:size())
             model:backward(train_input_mb, criterion:backward(model.output, train_output_mb))
             LTgrad:zero()
             model:updateParameters(opt.lambda)
@@ -148,8 +148,7 @@ function train(train_data, test_data, model, criterion)
     end
     -- Validation error at epoch
     local score = eval(test_data, model, criterion)
-    local savefile = string.format('%s_epoch%.2f_%.2f.t7',
-                                   opt.savefile, t, score)
+    local savefile = string.format('%s_epoch%.2f_%.2f.t7', opt.savefile, t, score)
     torch.save(savefile, model)
     print('saving checkpoint to ' .. savefile)
   end
