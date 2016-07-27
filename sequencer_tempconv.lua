@@ -37,6 +37,7 @@ function data:__init(data_file)
    end
    if opt.gpu > 0 then
      require 'cudnn';
+     require 'cutorch';
      self.input:cuda()
      self.output:cuda()
    end
