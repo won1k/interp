@@ -144,10 +144,10 @@ function train(train_data, test_data, model, criterion)
       model:forget()
     end
     -- Validation error at epoch
-    local score = eval(test_data, model, criterion)
-    local savefile = string.format('%s_epoch%.2f_%.2f.t7', opt.savefile, t, score)
-    torch.save(savefile, model)
-    print('saving checkpoint to ' .. savefile)
+    --local score = eval(test_data, model, criterion)
+    --local savefile = string.format('%s_epoch%.2f_%.2f.t7', opt.savefile, t, score)
+    --torch.save(savefile, model)
+    --print('saving checkpoint to ' .. savefile)
   end
 end
 
