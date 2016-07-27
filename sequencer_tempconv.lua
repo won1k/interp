@@ -68,6 +68,7 @@ function make_model(train_data, lt_weights) -- batch_size x sentlen tensor input
   temp:add(nn.JoinTable(3)) -- (sent_len - 4) x hid_dim x batch_size
   model:add(temp)
   model:add(nn.Transpose({2,3})) -- (sent_len - 4) x batch_size x hid_dim
+  model:add(nn.SplitTable(1)) -- (sent_len - 4) table of batch_size x hid_dim
   local seq = nn.Sequential()
   seq:add(nn.HardTanh())
   seq:add(nn.Linear(opt.dhid, train_data.nclasses))
@@ -128,7 +129,9 @@ function train(train_data, test_data, model, criterion)
               { seq_idx + 1, seq_idx + sequence_len }}] -- batch_size x senquence_len tensor
             local train_output_mb = train_data[sentlen][2][{
               { batch_idx + 1, batch_idx + batch_size },
-              { seq_idx + torch.floor(opt.dwin/2) + 1, seq_idx + sequence_len - torch.floor(opt.dwin/2)}}]:transpose(1,2) -- batch_size x (sequence_len - 4)
+              { seq_idx + torch.floor(opt.dwin/2) + 1, seq_idx + sequence_len - torch.floor(opt.dwin/2)}}]:transpose(1,2)
+              -- batch_size x (sequence_len - 4)
+            train_output_mb = nn.SplitTable(2) -- (sequence_len - 4) table of batch_size
 
             criterion:forward(model:forward(train_input_mb), train_output_mb)
             model:zeroGradParameters()
