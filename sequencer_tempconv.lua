@@ -19,6 +19,7 @@ cmd:option('-bsize', 32, 'mini-batch size')
 cmd:option('-seqlen', 20, 'seq-len size')
 cmd:option('-dhid', 300, 'hidden dimension')
 cmd:option('-dwin', 5, 'window size')
+cmd:option('-param_init', 0.05, 'initial parameter values')
 
 local data = torch.class('data')
 function data:__init(data_file)
@@ -107,10 +108,12 @@ function make_model(train_data, lt_weights) -- batch_size x sentlen tensor input
 end
 
 function train(train_data, test_data, model, criterion)
-  model:training()
+  local params, gradParams = model:getParameters()
+  params:uniform(-opt.param_init, opt.param_init)
   -- Get params to prevent LT weights update
   local LTweights, LTgrad = model:get(1):getParameters()
   for t = 1, opt.epochs do
+    model:training()
     print("Training epoch: " .. t)
     -- Assuming data is in format data[sentlen] = { nsent x sentlen tensor, nsent x sentlen tensor }
     for i = 1, train_data.nlengths do
@@ -141,13 +144,12 @@ function train(train_data, test_data, model, criterion)
           end
         end
       end
-      model:forget()
     end
     -- Validation error at epoch
-    --local score = eval(test_data, model, criterion)
-    --local savefile = string.format('%s_epoch%.2f_%.2f.t7', opt.savefile, t, score)
-    --torch.save(savefile, model)
-    --print('saving checkpoint to ' .. savefile)
+    local score = eval(test_data, model, criterion)
+    local savefile = string.format('%s_epoch%.2f_%.2f.t7', opt.savefile, t, score)
+    torch.save(savefile, model)
+    print('saving checkpoint to ' .. savefile)
   end
 end
 
