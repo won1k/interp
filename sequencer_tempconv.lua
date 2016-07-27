@@ -129,10 +129,9 @@ function train(train_data, test_data, model, criterion)
               { seq_idx + 1, seq_idx + sequence_len }}] -- batch_size x senquence_len tensor
             local train_output_mb = train_data[sentlen][2][{
               { batch_idx + 1, batch_idx + batch_size },
-              { seq_idx + torch.floor(opt.dwin/2) + 1, seq_idx + sequence_len - torch.floor(opt.dwin/2)}}]:transpose(1,2)
+              { seq_idx + torch.floor(opt.dwin/2) + 1, seq_idx + sequence_len - torch.floor(opt.dwin/2)}}]
               -- batch_size x (sequence_len - 4)
-            train_output_mb = nn.SplitTable(1):forward(train_output_mb) -- (sequence_len - 4) table of batch_size
-            print(train_output_mb)
+            train_output_mb = nn.SplitTable(2):forward(train_output_mb) -- (sequence_len - 4) table of batch_size
 
             criterion:forward(model:forward(train_input_mb), train_output_mb)
             model:zeroGradParameters()
@@ -169,7 +168,9 @@ function eval(data, model, criterion)
           local test_input_mb = data[sentlen][1][{{ batch_idx + 1, batch_idx + batch_size },
                                               { seq_idx + 1, seq_idx + sequence_len }}] -- batch_size x senquence_len tensor
           local test_output_mb = data[sentlen][2][{{ batch_idx + 1, batch_idx + batch_size },
-            { seq_idx + torch.floor(opt.dwin/2) + 1, seq_idx + sequence_len - torch.floor(opt.dwin/2)}}]:transpose(1,2) -- batch_size x (sequence_len - 4)
+            { seq_idx + torch.floor(opt.dwin/2) + 1, seq_idx + sequence_len - torch.floor(opt.dwin/2)}}]
+            -- batch_size x (sequence_len - 4)
+          test_output_mb = nn.SplitTable(2):forward(test_output_mb)
 
           nll = nll + criterion:forward(model:forward(test_input_mb), test_output_mb) * batch_size
           total = total + sequence_len * batch_size
