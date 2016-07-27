@@ -141,6 +141,7 @@ function train(train_data, test_data, model, criterion)
           end
         end
       end
+      model:forget()
     end
     -- Validation error at epoch
     local score = eval(test_data, model, criterion)
@@ -178,7 +179,7 @@ function eval(data, model, criterion)
         end
       end
     end
-
+    model:forget()
   end
   local valid = math.exp(nll / total)
   print('Validation error', valid)
