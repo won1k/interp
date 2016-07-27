@@ -140,6 +140,7 @@ function train(train_data, test_data, model, criterion)
             model:updateParameters(opt.lambda)
           end
         end
+        model:forget()
       end
     end
     -- Validation error at epoch
