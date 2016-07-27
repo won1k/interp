@@ -34,13 +34,10 @@ function data:__init(data_file)
      local len = self.lengths[i]
      self.input[len] = f:read(tostring(len)):all():double()
      self.output[len] = f:read(tostring(len) .. "_output"):all():double()
-   end
-   if opt.gpu > 0 then
-     require 'cudnn';
-     require 'cutorch';
-     require 'cunn';
-     self.input:cuda()
-     self.output:cuda()
+     if opt.gpu > 0 then
+       self.input[len] = self.input[len]:cuda()
+       self.output[len] = self.output[len]:cuda()
+     end
    end
    f:close()
 end
@@ -202,6 +199,11 @@ end
 function main()
    	-- Parse input params
    	opt = cmd:parse(arg)
+    if opt.gpu > 0 then
+      require 'cudnn';
+      require 'cutorch';
+      require 'cunn';
+    end
 
     -- Load training data
     local train_data = data.new(opt.datafile)
