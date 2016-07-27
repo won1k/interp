@@ -135,15 +135,11 @@ function train(train_data, test_data, model, criterion)
 
             criterion:forward(model:forward(train_input_mb), train_output_mb)
             model:zeroGradParameters()
-            print(train_input_mb:size())
-            print(model.output[1]:size())
-            print(train_output_mb[1]:size())
             model:backward(train_input_mb, criterion:backward(model.output, train_output_mb))
             LTgrad:zero()
             model:updateParameters(opt.lambda)
           end
         end
-        model:forget()
       end
     end
     -- Validation error at epoch
