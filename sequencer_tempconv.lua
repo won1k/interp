@@ -202,8 +202,8 @@ function predict(data, model)
         _, maxidx[j] = test_pred[j]:max(2)
       end
       maxidx = nn.JoinTable(2):forward(maxidx)
-      g:write(tostring(sentlen), maxidx:long())
-      g:write(tostring(sentlen) .. '_target', test_output:long())
+      output:write(tostring(sentlen), maxidx:long())
+      output:write(tostring(sentlen) .. '_target', test_output:long())
     end
   end
 end
