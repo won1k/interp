@@ -48,9 +48,8 @@ function data.__index(self, idx)
    if type(idx) == "string" then
       return data[idx]
    else
-      input = self.input[idx]--:transpose(1,2):float()
+      input = self.input[idx]
       output = self.output[idx]
-      --nn.SplitTable(2):forward(self.output[idx]:float()) -- sent_len table of batch_size
    end
    return {input, output}
 end
@@ -193,14 +192,18 @@ function predict(data, model)
   local output = hdf5.open(opt.testoutfile, 'w')
   for i = 1, data.nlengths do
     local sentlen = data.lengths[i]
-    if sentlen > opt.dwin then
-      local len_data = data[sentlen]
-      local test_input = len_data[1]
+      if sentlen > opt.dwin then
+      local test_input = data[sentlen][1] -- nsent x senquence_len tensor
+      local test_output = data[sentlen][2][{{},
+        { 1 + torch.floor(opt.dwin/2), sentlen - torch.floor(opt.dwin/2)}}] -- batch_size x (sequence_len - 4)
       local test_pred = model:forward(test_input)
-      local maxval, maxidx = test_pred:max(2)
-      maxidx = maxidx:squeeze()
-      output:write(tostring(sentlen), maxidx)
-      output:write(tostring(sentlen) .. '_pred', test_pred)
+      local maxidx = {}
+      for j = 1, #test_pred do
+        _, maxidx[j] = test_pred[j]:max(2)
+      end
+      maxidx = nn.JoinTable(2):forward(maxidx)
+      g:write(tostring(sentlen), maxidx:long())
+      g:write(tostring(sentlen) .. '_target', test_output:long())
     end
   end
 end
@@ -222,13 +225,14 @@ function main()
     -- Create model
     local h = hdf5.open(opt.ltweights, 'r')
 		local lt_weights = h:read('weights'):all():double()
-    local model, criterion = make_model(train_data, lt_weights)
+    --local model, criterion = make_model(train_data, lt_weights)
 
     -- Train.
-    train(train_data, test_data, model, criterion)
+    --train(train_data, test_data, model, criterion)
 
     -- Test.
-    --predict(test_data, model)
+    local model = torch.load('word_epoch30.00_1.39.t7')
+    predict(test_data, model)
 end
 
 main()
