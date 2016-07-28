@@ -231,7 +231,7 @@ function main()
     --train(train_data, test_data, model, criterion)
 
     -- Test.
-    local model = torch.load('word_epoch30.00_1.39.t7')
+    local model = torch.load('checkpoint_seq/word_epoch30.00_1.39.t7')
     predict(test_data, model)
 end
 
