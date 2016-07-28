@@ -208,8 +208,8 @@ function predict(data, model)
       maxidx = nn.JoinTable(2):forward(maxidx)
       output:write(tostring(sentlen), maxidx:long())
       output:write(tostring(sentlen) .. '_target', test_output:long())
-      accuracy = accuracy + torch.eq(maxidx, test_output):sum()
-      total = total + test_output:ge(0):sum()
+      accuracy = accuracy + torch.eq(maxidx:long(), test_output:long()):sum()
+      total = total + test_output:long():ge(0):sum()
     end
   end
   output:write('nlengths', nlengths)
