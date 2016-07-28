@@ -190,9 +190,13 @@ end
 function predict(data, model)
   model:evaluate()
   local output = hdf5.open(opt.testoutfile, 'w')
+  local accuracy = 0
+  local total = 0
+  local nlengths = {}
   for i = 1, data.nlengths do
     local sentlen = data.lengths[i]
-      if sentlen > opt.dwin then
+    if sentlen > opt.dwin then
+      table.insert(nlengths, sentlen)
       local test_input = data[sentlen][1] -- nsent x senquence_len tensor
       local test_output = data[sentlen][2][{{},
         { 1 + torch.floor(opt.dwin/2), sentlen - torch.floor(opt.dwin/2)}}] -- batch_size x (sequence_len - 4)
@@ -204,8 +208,12 @@ function predict(data, model)
       maxidx = nn.JoinTable(2):forward(maxidx)
       output:write(tostring(sentlen), maxidx:long())
       output:write(tostring(sentlen) .. '_target', test_output:long())
+      accuracy = accuracy + torch.eq(maxidx, test_output):sum()
+      total = total + test_output:ge(0):sum()
     end
   end
+  output:write('nlengths', nlengths)
+  print('Accuracy', accuracy / total)
 end
 
 
