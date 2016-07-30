@@ -56,7 +56,7 @@ function data.__index(self, idx)
       return data[idx]
    else
       input = self.input[idx]:transpose(1, 2)--:cuda()
-      target = nn.SplitTable(2):forward(self.target_output[idx])--:cuda())
+      target = nn.SplitTable(2):forward(self.output[idx])--:cuda())
       if opt.gpu > 0 then
         input = input:cuda()
         output = output:cuda()
