@@ -102,8 +102,8 @@ function train(data, valid_data, model, criterion)
              end
              params:add(grad_params:mul(-opt.learning_rate))
           end
+          model:forget()
         end
-        model:forget()
       end
       --local score = eval(valid_data, model)
       --local savefile = string.format('%s_epoch%.2f_%.2f.t7',
