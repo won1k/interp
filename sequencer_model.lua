@@ -28,7 +28,7 @@ function data:__init(opt, data_file)
    self.input = {}
    self.output = {}
 
-   self.lengths = f:read('sent_lens'):all()[1]
+   self.lengths = f:read('sent_lens'):all()
    self.max_len = f:read('max_len'):all()[1]
    self.nclasses = f:read('nclasses'):all():long()[1]
    self.nfeatures = f:read('nfeatures'):all():long()[1]
