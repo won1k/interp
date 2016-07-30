@@ -55,12 +55,8 @@ function data.__index(self, idx)
    if type(idx) == "string" then
       return data[idx]
    else
-      input = self.input[idx]:transpose(1, 2)--:cuda()
-      output = nn.SplitTable(2):forward(self.output[idx])--:cuda())
-      if opt.gpu > 0 then
-        input = input:cuda()
-        output = output:cuda()
-      end
+      input = self.input[idx]:transpose(1, 2)
+      output = nn.SplitTable(2):forward(self.output[idx])
    end
    return {input, output}
 end
