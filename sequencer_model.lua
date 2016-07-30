@@ -14,7 +14,7 @@ cmd:option('-dropoutProb', 0.5, 'dropoff param')
 
 cmd:option('-data_file','convert_seq/data.hdf5','data directory. Should contain data.hdf5 with input data')
 cmd:option('-val_data_file','convert_seq/data_test.hdf5','data directory. Should contain data.hdf5 with input data')
-cmd:option('-gpuid',1,'which gpu to use. -1 = use CPU')
+cmd:option('-gpu',1,'which gpu to use. -1 = use CPU')
 cmd:option('-param_init', 0.05, 'initialize parameters at')
 cmd:option('-savefile', 'checkpoint_seq/lm','filename to autosave the checkpoint to')
 
@@ -154,12 +154,12 @@ function main()
     -- parse input params
    opt = cmd:parse(arg)
 
-   if opt.gpuid >= 0 then
-      print('using CUDA on GPU ' .. opt.gpuid .. '...')
+   if opt.gpu >= 0 then
+      print('using CUDA on GPU ' .. opt.gpu .. '...')
       require 'cutorch'
       require 'cunn'
       require 'cudnn'
-      --cutorch.setDevice(opt.gpuid + 1)
+      --cutorch.setDevice(opt.gpu + 1)
    end
 
    -- Create the data loader class.
@@ -167,7 +167,7 @@ function main()
    local valid_data = data.new(opt, opt.val_data_file)
    model, criterion = make_model(train_data)
 
-   if opt.gpuid >= 0 then
+   if opt.gpu >= 0 then
       model:cuda()
       criterion:cuda()
    end
