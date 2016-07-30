@@ -92,7 +92,7 @@ function train(data, valid_data, model, criterion)
              criterion:forward(model:forward(input_mb), output_mb)
              model:zeroGradParameters()
              model:backward(input_mb, criterion:backward(model.output, output_mb))
-             
+
              -- Grad Norm.
              local grad_norm = grad_params:norm()
              if grad_norm > opt.max_grad_norm then
@@ -103,9 +103,10 @@ function train(data, valid_data, model, criterion)
           end
         end
       end
-      local score = eval(valid_data, model)
-      local savefile = string.format('%s_epoch%.2f_%.2f.t7',
-                                     opt.savefile, epoch, score)
+      --local score = eval(valid_data, model)
+      --local savefile = string.format('%s_epoch%.2f_%.2f.t7',
+      --                               opt.savefile, epoch, score)
+      local savefile = string.format('%s_epoch%.2f.t7', opt.savefile, epoch)
       torch.save(savefile, model)
       print('saving checkpoint to ' .. savefile)
 
