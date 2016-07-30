@@ -87,6 +87,8 @@ function train(data, valid_data, model, criterion)
              local sequence_len = math.min(col_idx * opt.seqlen, sentlen) - seq_idx
              print('seq idx', seq_idx)
              print('batch idx', batch_idx)
+             print('seq len', sequence_len)
+             print('batch size', batch_size)
              local input_mb = input[{
                { seq_idx + 1, seq_idx + sequence_len },
                { batch_idx + 1, batch_idx + batch_size }}] -- sequence_len x batch_size tensor
