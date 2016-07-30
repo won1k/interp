@@ -112,10 +112,10 @@ function train(data, valid_data, model, criterion)
       torch.save(savefile, model)
       print('saving checkpoint to ' .. savefile)
 
-      if score > last_score - .3 then
-         opt.learning_rate = opt.learning_rate / 2
-      end
-      last_score = score
+      --if score > last_score - .3 then
+      --   opt.learning_rate = opt.learning_rate / 2
+      --end
+      --last_score = score
    end
 end
 
