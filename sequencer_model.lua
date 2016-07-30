@@ -86,11 +86,7 @@ function train(data, valid_data, model, criterion)
          end
 
          params:add(grad_params:mul(-opt.learning_rate))
-
-         if i % 100 == 0 then
-            print(i, data:size(),
-                  math.exp(loss/ sentlen), opt.learning_rate)
-         end
+         model:forget()
       end
       local score = eval(valid_data, model)
       local savefile = string.format('%s_epoch%.2f_%.2f.t7',
