@@ -32,7 +32,7 @@ function data:__init(opt, data_file)
    self.max_len = f:read('max_len'):all()[1]
    self.nclasses = f:read('nclasses'):all():long()[1]
    self.nfeatures = f:read('nfeatures'):all():long()[1]
-   self.length = #self.lengths
+   self.length = self.lengths:size(1)
 
    for i = 1, self.length do
      local len = self.lengths[i]
