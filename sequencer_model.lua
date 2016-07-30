@@ -75,7 +75,7 @@ function train(data, valid_data, model, criterion)
          local sentlen = data.lengths[i]
          print(sentlen)
          local d = data[sentlen]
-         input, output = d[1], d[2]
+         local input, output = d[1], d[2]
          print('Input size', input:size())
          print('Output size', output:size())
          local nsent = input:size(2) -- sentlen x nsent input
