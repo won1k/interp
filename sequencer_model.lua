@@ -68,8 +68,8 @@ function train(data, valid_data, model, criterion)
    params:uniform(-opt.param_init, opt.param_init)
    for epoch = 1, opt.epochs do
       print('epoch: ' .. epoch)
-      model:training()
       for i = 1, data:size() do
+         model:training()
          local sentlen = data.lengths[i]
          print(sentlen)
          model:zeroGradParameters()
