@@ -60,6 +60,7 @@ function data.__index(self, idx)
       if opt.gpu > 0 then
         input = input:cuda()
         output = output:cuda()
+      end
    end
    return {input, target}
 end
@@ -154,7 +155,6 @@ function main()
    opt = cmd:parse(arg)
 
    if opt.gpuid >= 0 then
-
       print('using CUDA on GPU ' .. opt.gpuid .. '...')
       require 'cutorch'
       require 'cunn'
