@@ -75,7 +75,7 @@ function train(data, valid_data, model, criterion)
          local sentlen = data.lengths[i]
          print(sentlen)
          local d = data[sentlen]
-         input, goal = d[1], d[2]
+         input, output = d[1], d[2]
          local nsent = input:size(2) -- sentlen x nsent input
          for sent_idx = 1, torch.ceil(nsent / opt.bsize) do
            local batch_idx = (sent_idx - 1) * opt.bsize
