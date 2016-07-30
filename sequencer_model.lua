@@ -113,6 +113,7 @@ function eval(data, model)
       out = model:forward(input)
       nll = nll + criterion:forward(out, goal) * data[sentlen][1]:size(1)
       total = total + sentlen * data[sentlen][1]:size(1)
+      model:forget()
    end
    local valid = math.exp(nll / total)
    print("Valid", valid)
