@@ -67,9 +67,9 @@ function train(data, valid_data, model, criterion)
    local params, grad_params = model:getParameters()
    params:uniform(-opt.param_init, opt.param_init)
    for epoch = 1, opt.epochs do
+      model:training()
       print('epoch: ' .. epoch)
       for i = 1, data:size() do
-         model:training()
          local sentlen = data.lengths[i]
          print(sentlen)
          model:zeroGradParameters()
