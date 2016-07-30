@@ -85,6 +85,8 @@ function train(data, valid_data, model, criterion)
            for col_idx = 1, torch.ceil(sentlen / opt.seqlen) do
              local seq_idx = (col_idx - 1) * opt.seqlen
              local sequence_len = math.min(col_idx * opt.seqlen, sentlen) - seq_idx
+             print(seq_idx)
+             print(batch_idx)
              local input_mb = input[{
                { seq_idx + 1, seq_idx + sequence_len },
                { batch_idx + 1, batch_idx + batch_size }}] -- sequence_len x batch_size tensor
