@@ -56,7 +56,7 @@ function data.__index(self, idx)
       return data[idx]
    else
       input = self.input[idx]:transpose(1, 2)
-      output = nn.SplitTable(2):forward(self.output[idx])
+      output = self.output[idx]:transpose(1,2)
    end
    return {input, output}
 end
@@ -72,21 +72,36 @@ function train(data, valid_data, model, criterion)
       for i = 1, data:size() do
          local sentlen = data.lengths[i]
          print(sentlen)
-         model:zeroGradParameters()
          local d = data[sentlen]
          input, goal = d[1], d[2]
-         local out = model:forward(input)
-         local loss = criterion:forward(out, goal)
-         deriv = criterion:backward(out, goal)
-         model:backward(input, deriv)
-         -- Grad Norm.
-         local grad_norm = grad_params:norm()
-         if grad_norm > opt.max_grad_norm then
-            grad_params:mul(opt.max_grad_norm / grad_norm)
-         end
+         local nsent = input:size(2) -- sentlen x nsent input
+         for sent_idx = 1, torch.ceil(nsent / opt.bsize) do
+           local batch_idx = (sent_idx - 1) * opt.bsize
+           local batch_size = math.min(sent_idx * opt.bsize, nsent) - batch_idx
+           for col_idx = 1, torch.ceil(sentlen / opt.seqlen) do
+             local seq_idx = (col_idx - 1) * opt.seqlen
+             local sequence_len = math.min(col_idx * opt.seqlen, sentlen) - seq_idx
+             local input_mb = input[{
+               { seq_idx + 1, seq_idx + sequence_len },
+               { batch_idx + 1, batch_idx + batch_size }}] -- sequence_len x batch_size tensor
+             local output_mb = output[{
+               { seq_idx + 1, seq_idx + sequence_len },
+               { batch_idx + 1, batch_idx + batch_size }}]
+             output_mb = nn.SplitTable(1):forward(output_mb) -- sequence_len table of batch_size
 
-         params:add(grad_params:mul(-opt.learning_rate))
-         model:forget()
+             criterion:forward(model:forward(input_mb), output_mb)
+             model:zeroGradParameters()
+             model:backward(input_mb, criterion:backward(model.output, output_mb))
+             
+             -- Grad Norm.
+             local grad_norm = grad_params:norm()
+             if grad_norm > opt.max_grad_norm then
+                grad_params:mul(opt.max_grad_norm / grad_norm)
+             end
+             params:add(grad_params:mul(-opt.learning_rate))
+             model:forget()
+          end
+        end
       end
       local score = eval(valid_data, model)
       local savefile = string.format('%s_epoch%.2f_%.2f.t7',
