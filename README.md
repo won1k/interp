@@ -22,7 +22,16 @@
 
 # Pipeline (Word)
 
+1) tempconv_word.lua [ >> word_test_results.hdf5 ]
+2) postpro_conll.py test.txt convert/train_parsed_chunks.dict word_test_results.hdf5 test_conll_word.txt
+3) ./conlleval.pl < test_conll_word.txt
+
 # Pipeline (Sequencer)
 
 1) sequencer_prepro.py train.txt test.txt convert_seq/data
 2) sequencer_tempconv.lua
+
+# Pipeline (POS)
+
+1) tempconv.lua [ >> test_results_pos.hdf5 ('output' = predicted tags, 'chunks' = actual tags) ]
+2)

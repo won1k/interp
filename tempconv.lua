@@ -36,6 +36,8 @@ function eval(test_input, test_output, net)
 	return accuracy/n
 end
 
+function make_model()
+
 -- Neural network model
 function NN(train_input, train_output, test_input, test_output, dwin, state_dim, lambda, epochs, bsize, dhid)
 	local n = train_input:size()[1]
@@ -101,6 +103,12 @@ function main()
 		local h = hdf5.open(opt.testfile, 'r')
 		local j = hdf5.open(opt.testtagfile, 'r')
 
+		if opt.gpu > 0 then
+			require 'cutorch';
+			require 'cunn';
+			require 'cudnn';
+		end
+
     -- Parse hyperparameters
     local state_dim = opt.state_dim
     local lambda = opt.lambda
@@ -133,7 +141,7 @@ function main()
 		local output = hdf5.open(opt.testoutfile, 'w')
 		output:write('predictions', test_pred)
 		output:write('output', maxidx)
-		output:write('chunks', test_output_windowed)
+		output:write('tags', test_output_windowed)
 		output:write('dwin', torch.Tensor{dwin})
 		output:close()
 end

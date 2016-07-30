@@ -25,13 +25,25 @@ opt = cmd:parse(arg)
 local data = torch.class("data")
 function data:__init(opt, data_file)
    local f = hdf5.open(data_file, 'r')
-   self.target  = f:read('target'):all()
-   self.target_output = f:read('target_output'):all()
-   self.target_size = f:read('target_size'):all()[1]
+   self.input = {}
+   self.output = {}
 
-   self.length = f:read('sent_lens'):all()[1]
-   self.seqlength = self.target:size(3)
-   self.batchlength = self.target:size(2)
+   self.lengths = f:read('sent_lens'):all()[1]
+   self.max_len = f:read('max_len'):all()[1]
+   self.nclasses = f:read('nclasses'):all():long()[1]
+   self.nfeatures = f:read('nfeatures'):all():long()[1]
+   self.length = #self.lengths
+
+   for i = 1, self.length do
+     local len = self.lengths[i]
+     self.input[len] = f:read(tostring(len)):all():double()
+     self.output[len] = f:read(tostring(len) .. "_output"):all():double()
+     if opt.gpu > 0 then
+       self.input[len] = self.input[len]:cuda()
+       self.output[len] = self.output[len]:cuda()
+     end
+   end
+   f:close()
 end
 
 function data:size()
@@ -43,8 +55,11 @@ function data.__index(self, idx)
    if type(idx) == "string" then
       return data[idx]
    else
-      input = self.target[idx]:transpose(1, 2):float()--:cuda()
-      target = nn.SplitTable(2):forward(self.target_output[idx]:float())--:cuda())
+      input = self.input[idx]:transpose(1, 2)--:cuda()
+      target = nn.SplitTable(2):forward(self.target_output[idx])--:cuda())
+      if opt.gpu > 0 then
+        input = input:cuda()
+        output = output:cuda()
    end
    return {input, target}
 end
@@ -58,8 +73,10 @@ function train(data, valid_data, model, criterion)
       print('epoch: ' .. epoch)
       model:training()
       for i = 1, data:size() do
+         local sentlen = data.lengths[i]
+         print(sentlen)
          model:zeroGradParameters()
-         local d = data[i]
+         local d = data[sentlen]
          input, goal = d[1], d[2]
          local out = model:forward(input)
          local loss = criterion:forward(out, goal)
@@ -75,7 +92,7 @@ function train(data, valid_data, model, criterion)
 
          if i % 100 == 0 then
             print(i, data:size(),
-                  math.exp(loss/ data.seqlength), opt.learning_rate)
+                  math.exp(loss/ sentlen), opt.learning_rate)
          end
       end
       local score = eval(valid_data, model)
@@ -97,11 +114,12 @@ function eval(data, model)
    local nll = 0
    local total = 0
    for i = 1, data:size() do
-      local d = data[i]
+      local sentlen = data.lengths[i]
+      local d = data[sentlen]
       local input, goal = d[1], d[2]
       out = model:forward(input)
-      nll = nll + criterion:forward(out, goal) * data.batchlength
-      total = total + data.seqlength * data.batchlength
+      nll = nll + criterion:forward(out, goal) * data[sentlen][1]:size(1)
+      total = total + sentlen * data[sentlen][1]:size(1)
    end
    local valid = math.exp(nll / total)
    print("Valid", valid)
@@ -112,7 +130,7 @@ function make_model(train_data)
    local model = nn.Sequential()
    model.lookups_zero = {}
 
-   model:add(nn.LookupTable(train_data.target_size, opt.word_vec_size))
+   model:add(nn.LookupTable(train_data.nfeatures, opt.word_vec_size))
    model:add(nn.SplitTable(1, 3))
 
    model:add(nn.Sequencer(nn.FastLSTM(opt.rnn_size, opt.rnn_size)))
@@ -122,7 +140,7 @@ function make_model(train_data)
    end
 
    model:add(nn.Sequencer(nn.Dropout(opt.dropoutProb)))
-   model:add(nn.Sequencer(nn.Linear(opt.rnn_size, train_data.target_size)))
+   model:add(nn.Sequencer(nn.Linear(opt.rnn_size, train_data.nclasses)))
    model:add(nn.Sequencer(nn.LogSoftMax()))
 
    model:remember('both')
@@ -140,6 +158,7 @@ function main()
       print('using CUDA on GPU ' .. opt.gpuid .. '...')
       require 'cutorch'
       require 'cunn'
+      require 'cudnn'
       cutorch.setDevice(opt.gpuid + 1)
    end
 

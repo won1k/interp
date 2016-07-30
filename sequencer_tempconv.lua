@@ -9,6 +9,7 @@ cmd:option('-datafile', 'convert_seq/data.hdf5', 'data file')
 cmd:option('-testfile', 'convert_seq/data_test.hdf5', 'raw words for test')
 cmd:option('-savefile', 'checkpoint_seq/word', 'output file for checkpoints')
 cmd:option('-testoutfile', 'seq_test_results.hdf5', 'output file for test')
+cmd:option('-word', 1, 'whether using words (1) or LSTM states (0)')
 cmd:option('-ltweights', 'embeddings/lstm_LT.h5', 'file containing LT weights')
 cmd:option('-gpu', 0, 'whether to use gpu')
 
@@ -233,13 +234,12 @@ function main()
     -- Create model
     local h = hdf5.open(opt.ltweights, 'r')
 		local lt_weights = h:read('weights'):all():double()
-    --local model, criterion = make_model(train_data, lt_weights)
+    local model, criterion = make_model(train_data, lt_weights)
 
     -- Train.
-    --train(train_data, test_data, model, criterion)
+    train(train_data, test_data, model, criterion)
 
     -- Test.
-    local model = torch.load('checkpoint_seq/word_epoch30.00_1.39.t7')
     predict(test_data, model)
 end
 
