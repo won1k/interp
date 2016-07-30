@@ -37,6 +37,7 @@ function eval(test_input, test_output, net)
 end
 
 function make_model()
+end
 
 -- Neural network model
 function NN(train_input, train_output, test_input, test_output, dwin, state_dim, lambda, epochs, bsize, dhid)

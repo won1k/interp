@@ -159,7 +159,7 @@ function main()
       require 'cutorch'
       require 'cunn'
       require 'cudnn'
-      cutorch.setDevice(opt.gpuid + 1)
+      --cutorch.setDevice(opt.gpuid + 1)
    end
 
    -- Create the data loader class.
