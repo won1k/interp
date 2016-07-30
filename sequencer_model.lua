@@ -76,8 +76,6 @@ function train(data, valid_data, model, criterion)
          print(sentlen)
          local d = data[sentlen]
          local input, output = d[1], d[2]
-         print('Input size', input:size())
-         print('Output size', output:size())
          local nsent = input:size(2) -- sentlen x nsent input
          for sent_idx = 1, torch.ceil(nsent / opt.bsize) do
            local batch_idx = (sent_idx - 1) * opt.bsize
@@ -85,10 +83,6 @@ function train(data, valid_data, model, criterion)
            for col_idx = 1, torch.ceil(sentlen / opt.seqlen) do
              local seq_idx = (col_idx - 1) * opt.seqlen
              local sequence_len = math.min(col_idx * opt.seqlen, sentlen) - seq_idx
-             print('seq idx', seq_idx)
-             print('batch idx', batch_idx)
-             print('seq len', sequence_len)
-             print('batch size', batch_size)
              local input_mb = input[{
                { seq_idx + 1, seq_idx + sequence_len },
                { batch_idx + 1, batch_idx + batch_size }}] -- sequence_len x batch_size tensor
