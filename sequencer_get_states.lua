@@ -117,6 +117,7 @@ function eval1(data, model)
        end
        print('output sentence ' .. b .. ' of ' .. nsent)
      end
+     model:forget()
   end
 end
 
