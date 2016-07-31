@@ -7,10 +7,12 @@ import numpy as np
 class Indexer:
     def __init__(self):
         self.counter = 1
-        self.tag_counter = 1
+        self.chunk_counter = 1
+        self.pos_counter = 1
         self.d = {}
         self.rev = {}
-        self.tag_d = {}
+        self.chunk_d = {}
+        self.pos_d = {}
         self._lock = False
         self.max_len = 0
 
@@ -23,11 +25,17 @@ class Indexer:
             self.counter += 1
         return self.d[w]
 
-    def convert_tag(self, t):
-        if t not in self.tag_d:
-            self.tag_d[t] = self.tag_counter
-            self.tag_counter += 1
-        return self.tag_d[t]
+    def convert_chunk(self, t):
+        if t not in self.chunk_d:
+            self.chunk_d[t] = self.chunk_counter
+            self.chunk_counter += 1
+        return self.chunk_d[t]
+
+    def convert_pos(self, t):
+        if t not in self.pos_d:
+            self.pos_d[t] = self.pos_counter
+            self.pos_counter += 1
+        return self.pos_d[t]
 
     def lock(self):
         self._lock = True
@@ -40,9 +48,17 @@ class Indexer:
             print >>out, k, v
         out.close()
 
-    def write_tags(self, outfile):
+    def write_chunks(self, outfile):
         out = open(outfile, "w")
-        items = [(v, k) for k, v in self.tag_d.iteritems()]
+        items = [(v, k) for k, v in self.chunk_d.iteritems()]
+        items.sort()
+        for v, k in items:
+            print >>out, k, v
+        out.close()
+
+    def write_pos(self, outfile):
+        out = open(outfile, "w")
+        items = [(v, k) for k, v in self.pos_d.iteritems()]
         items.sort()
         for v, k in items:
             print >>out, k, v
@@ -55,42 +71,68 @@ def get_data(args):
     target_indexer.convert("<unk>")
     target_indexer.convert("</s>")
 
+    def sequencer_template(datafile, sentences, pos_seqs, chunk_seqs):
+        out = open("sequencer_" + datafile, "w")
+        idx_to_word = dict([(v, k) for k, v in target_indexer.d.iteritems()])
+        idx_to_chunk = dict([(v, k) for k, v in target_indexer.chunk_d.iteritems()])
+        idx_to_pos = dict([(v, k) for k, v in target_indexer.pos_d.iteritems()])
+        for length, sent_list in sentences.iteritems():
+            chunk_seq = chunk_seqs[length]
+            pos_seq = pos_seqs[length]
+            for sent_idx, sentence in enumerate(sent_list):
+                for word_idx, word in enumerate(sentence):
+                    word = idx_to_word[word]
+                    chunk = idx_to_chunk[chunk_seq[sent_idx][word_idx]]
+                    pos = idx_to_pos[pos_seq[sent_idx][word_idx]]
+                    print >>out, word, pos, chunk
+                print >>out, ""
+
     def convert(datafile, outfile):
-        with open(args.trainfile, 'r') as f:
+        with open(datafile, 'r') as f:
             sentences = {}
-            tag_seqs = {}
+            pos_seqs = {}
+            chunk_seqs = {}
             sentence = []
-            tag_seq = []
+            pos_seq = []
+            chunk_seq = []
             for line in f:
                 if not line.strip():
                     length = len(sentence)
                     target_indexer.max_len = max(target_indexer.max_len, length)
                     if length in sentences:
                         sentences[length].append(sentence)
-                        tag_seqs[length].append(tag_seq)
+                        pos_seqs[length].append(pos_seq)
+                        chunk_seqs[length].append(chunk_seq)
                     else:
                         sentences[length] = [sentence]
-                        tag_seqs[length] = [tag_seq]
+                        pos_seqs[length] = [pos_seq]
+                        chunk_seqs[length] = [chunk_seq]
                     sentence = []
-                    tag_seq = []
+                    pos_seq = []
+                    chunk_seq = []
                     continue
                 sentence.append(target_indexer.convert(line.strip().split(' ')[0]))
-                tag_seq.append(target_indexer.convert_tag(line.strip().split(' ')[-1]))
+                pos_seq.append(target_indexer.convert_pos(line.strip().split(' ')[1]))
+                chunk_seq.append(target_indexer.convert_chunk(line.strip().split(' ')[2]))
         f = h5py.File(outfile, "w")
         sent_lens = sentences.keys()
         f["sent_lens"] = np.array(sent_lens, dtype=int)
         for sent_len in sent_lens:
             f[str(sent_len)] = np.array(sentences[sent_len], dtype=int)
-            f[str(sent_len) + "_output"] = np.array(tag_seqs[sent_len], dtype = int)
+            f[str(sent_len) + "_pos"] = np.array(pos_seqs[sent_len], dtype = int)
+            f[str(sent_len) + "_chunks"] = np.array(chunk_seqs[sent_len], dtype = int)
         f["max_len"] = np.array([target_indexer.max_len], dtype=int)
         f["nfeatures"] = np.array([target_indexer.counter - 1], dtype=int)
-        f["nclasses"] = np.array([target_indexer.tag_counter - 1], dtype=int)
+        f["nclasses_pos"] = np.array([target_indexer.pos_counter - 1], dtype=int)
+        f["nclasses_chunk"] = np.array([target_indexer.chunk_counter - 1], dtype=int)
+        sequencer_template(args.trainfile, sentences, pos_seqs, chunk_seqs)
 
     convert(args.trainfile, args.outputfile + ".hdf5")
     target_indexer.lock()
     convert(args.testfile, args.outputfile + "_test" + ".hdf5")
     target_indexer.write(args.outputfile + ".dict")
-    target_indexer.write_tags(args.outputfile + ".tags.dict")
+    target_indexer.write_chunks(args.outputfile + ".chunks.dict")
+    target_indexer.write_pos(args.outputfile + ".pos.dict")
 
 def main(arguments):
     global args
