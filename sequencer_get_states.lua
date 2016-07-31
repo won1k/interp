@@ -23,7 +23,7 @@ end
 
 -- Construct the data set.
 local data = torch.class("data")
-function data:__init(opt, data_file)
+function data:__init(data_file)
    local f = hdf5.open(data_file, 'r')
    self.input = {}
    self.output = {}
