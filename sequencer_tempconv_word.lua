@@ -5,12 +5,10 @@ require 'rnn';
 cmd = torch.CmdLine()
 
 -- Cmd Args
-cmd:option('-datafile', 'convert_seq/data.hdf5', 'data file')
-cmd:option('-testfile', 'convert_seq/data_test.hdf5', 'raw words for test')
+cmd:option('-datafile', 'checkpoint_seq/lstm_states.h5', 'data file')
+cmd:option('-testfile', 'checkpoint_seq/lstm_states_test.h5', 'raw words for test')
 cmd:option('-savefile', 'checkpoint_seq/word', 'output file for checkpoints')
-cmd:option('-testoutfile', 'seq_test_results.hdf5', 'output file for test')
-cmd:option('-word', 1, 'whether using words (1) or LSTM states (0)')
-
+cmd:option('-testoutfile', 'sequencer_test_results.hdf5', 'output file for test')
 cmd:option('-gpu', 0, 'whether to use gpu')
 
 -- Hyperparameters
@@ -76,26 +74,6 @@ function make_model(train_data, lt_weights) -- batch_size x sentlen tensor input
   seq:add(nn.LogSoftMax())
   model:add(nn.Sequencer(seq))
   model:remember('both')
-
-  --local seq = nn.Sequential()
-  --seq:add(LT) -- batch_size x state_dim
-  --seq:add(nn.Linear(lt_weights:size(2), opt.dhid)) -- batch_size x hid_dim
-  --seq:add(nn.HardTanh())
-  --seq:add(nn.Linear(opt.dhid, train_data.nclasses)) -- batch_size x nclasses
-  --seq:add(nn.LogSoftMax())
-  --local model = nn.Sequencer(seq)
-  --model:remember('both')
-
-  --local LT = nn.LookupTable(lt_weights:size(1), lt_weights:size(2))
-  --LT.weight = lt_weights
-  --local seq = nn.Sequential() -- PROBLEM: HOW TO DO SEQUENCER WITH TEMP CONV
-  --seq:add(LT) -- batch_size x state_dim
-  --seq:add(nn.TemporalConvolution(lt_weights:size(2), opt.dhid, opt.dwin))
-  --seq:add(nn.HardTanh())
-  --seq:add(nn.Linear(opt.dhid, train_data.nclasses))
-  --seq:add(nn.LogSoftMax())
-  --local net = nn.Sequencer(seq)
-  --net:remember('both')
 
   local criterion = nn.SequencerCriterion(nn.ClassNLLCriterion())
 
