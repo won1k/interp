@@ -115,7 +115,7 @@ function eval1(data, model)
           k = 1
           model:get_states(b)
        end
-       print('output sentence ' .. b .. ' of ' .. nsent)
+       print('output sentence ' .. b .. ' of ' .. nsent .. ' of length ' .. sentlen)
      end
      model:forget()
   end
