@@ -105,17 +105,17 @@ function train(data, valid_data, model, criterion)
           model:forget()
         end
       end
-      --local score = eval(valid_data, model)
-      --local savefile = string.format('%s_epoch%.2f_%.2f.t7',
-      --                               opt.savefile, epoch, score)
-      local savefile = string.format('%s_epoch%.2f.t7', opt.savefile, epoch)
+      local score = eval(valid_data, model)
+      local savefile = string.format('%s_epoch%.2f_%.2f.t7',
+                                     opt.savefile, epoch, score)
+      --local savefile = string.format('%s_epoch%.2f.t7', opt.savefile, epoch)
       torch.save(savefile, model)
       print('saving checkpoint to ' .. savefile)
 
-      --if score > last_score - .3 then
-      --   opt.learning_rate = opt.learning_rate / 2
-      --end
-      --last_score = score
+      if score > last_score - .3 then
+         opt.learning_rate = opt.learning_rate / 2
+      end
+      last_score = score
    end
 end
 
@@ -127,10 +127,12 @@ function eval(data, model)
    for i = 1, data:size() do
       local sentlen = data.lengths[i]
       local d = data[sentlen]
-      local input, goal = d[1], d[2]
+      local input, output = d[1], d[2]
+      local nsent = input:size(2)
+      output = nn.SplitTable(1):forward(output)
       out = model:forward(input)
-      nll = nll + criterion:forward(out, goal) * data[sentlen][1]:size(1)
-      total = total + sentlen * data[sentlen][1]:size(1)
+      nll = nll + criterion:forward(out, output) * nsent
+      total = total + sentlen * nsent
       model:forget()
    end
    local valid = math.exp(nll / total)
