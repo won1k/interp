@@ -95,7 +95,7 @@ function Module:get_states(batch_idx)
                k = k + 1
             end
          else
-            module:get_states()
+            module:get_states(batch_idx)
          end
       end
    end
