@@ -14,8 +14,8 @@ cmd:option('-output_file','checkpoint/lstm_states.h5','path to output LSTM state
 cmd:option('-gpu',-1,'which gpu to use. -1 = use CPU')
 opt = cmd:parse(arg)
 
-if opt.gpuid >= 0 then
-   print('using CUDA on GPU ' .. opt.gpuid .. '...')
+if opt.gpu >= 0 then
+   print('using CUDA on GPU ' .. opt.gpu .. '...')
    require 'cutorch'
    require 'cunn'
    freeMemory, totalMemory = cutorch.getMemoryUsage(1)
