@@ -5,10 +5,12 @@ require 'rnn';
 cmd = torch.CmdLine()
 
 -- Cmd Args
-cmd:option('-datafile', 'checkpoint_seq/lstm_states.h5', 'data file')
-cmd:option('-testfile', 'checkpoint_seq/lstm_states_test.h5', 'raw words for test')
+cmd:option('-datafile', 'convert_seq/data.hdf5', 'data file')
+cmd:option('-testfile', 'convert_seq/data_test.hdf5', 'raw words for test')
 cmd:option('-savefile', 'checkpoint_seq/word', 'output file for checkpoints')
-cmd:option('-testoutfile', 'sequencer_test_results.hdf5', 'output file for test')
+cmd:option('-testoutfile', 'seq_test_results_word.hdf5', 'output file for test')
+cmd:option('-word', 1, 'whether using words (1) or LSTM states (0)')
+cmd:option('-ltweights', 'embeddings/lstm_LT.h5', 'file containing LT weights')
 cmd:option('-gpu', 0, 'whether to use gpu')
 
 -- Hyperparameters
