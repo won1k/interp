@@ -26,12 +26,22 @@ function data:__init(data_file)
    self.input = {}
    self.output = {}
    self.lengths = f:read('sent_lens'):all():long()
-   self.max_len = f:read('max_len'):all()[1]
+   self.nsent = f:read('nsent'):all():long()
    self.nlengths = self.lengths:size(1)
    self.nclasses = f:read('nclasses'):all():long()[1]
-   self.nfeatures = f:read('nfeatures'):all():long()[1]
+   self.state_dim = 
+
+   -- Load sequencer data from total x 650 state file
+   local curr_idx = 1
    for i = 1, self.nlengths do
      local len = self.lengths[i]
+     local nsent = self.nsent[i]
+     self.input[len] = torch.Tensor(nsent, len)
+     for j = 1, nsent do
+       self.inputcurr_idx
+
+
+
      self.input[len] = f:read(tostring(len)):all():double()
      self.output[len] = f:read(tostring(len) .. "_output"):all():double()
      if opt.gpu > 0 then

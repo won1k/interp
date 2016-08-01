@@ -132,4 +132,5 @@ f:write('states2', all_hidden[4]:float())
 f:write('sent_lens', data.lengths:long())
 f:write('nsent', torch.Tensor(nsent):long()) -- number of sentences per each length
 f:write('nclasses', torch.Tensor{data.nclasses}:long())
+f:write('state_dim', torch.Tensor{opt.rnn_size}:long())
 f:close()
