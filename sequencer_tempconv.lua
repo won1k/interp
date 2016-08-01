@@ -21,35 +21,38 @@ cmd:option('-dwin', 5, 'window size')
 cmd:option('-param_init', 0.05, 'initial parameter values')
 
 local data = torch.class('data')
-function data:__init(data_file)
+function data:__init(data_file, tag_file)
    local f = hdf5.open(data_file, 'r')
+   local g = hdf5.open(tag_filem 'r')
    self.input = {}
    self.output = {}
    self.lengths = f:read('sent_lens'):all():long()
    self.nsent = f:read('nsent'):all():long()
    self.nlengths = self.lengths:size(1)
    self.nclasses = f:read('nclasses'):all():long()[1]
-   self.state_dim = 
+   self.state_dim = f:read('state_dim'):all():long()[1]
 
    -- Load sequencer data from total x 650 state file
    local curr_idx = 1
+   local states = f:read('states2'):all()
    for i = 1, self.nlengths do
      local len = self.lengths[i]
      local nsent = self.nsent[i]
-     self.input[len] = torch.Tensor(nsent, len)
-     for j = 1, nsent do
-       self.inputcurr_idx
-
-
-
-     self.input[len] = f:read(tostring(len)):all():double()
+     self.input[len] = torch.Tensor(nsent, len, self.state_dim)
      self.output[len] = f:read(tostring(len) .. "_output"):all():double()
+     for j = 1, nsent do
+       for k = 1, len do
+         self.input[len][j][l] = states[curr_idx]
+         curr_idx = curr_idx + 1
+       end
+     end
      if opt.gpu > 0 then
        self.input[len] = self.input[len]:cuda()
        self.output[len] = self.output[len]:cuda()
      end
    end
    f:close()
+   g:close()
 end
 
 function data.__index(self, idx)
@@ -63,15 +66,12 @@ function data.__index(self, idx)
    return {input, output}
 end
 
-function make_model(train_data) -- batch_size x sentlen tensor input
+function make_model(train_data) -- batch_size x sentlen x state_dim tensor input
   local model = nn.Sequential()
-  local LT = nn.LookupTable(lt_weights:size(1), lt_weights:size(2))
-  LT.weight = lt_weights
-  model:add(LT) -- batch_size x sentlen x state_dim
   local temp = nn.Sequential()
   temp:add(nn.SplitTable(1)) -- batch_size table of sentlen x state_dim
   local temp_seq = nn.Sequential()
-  temp_seq:add(nn.TemporalConvolution(lt_weights:size(2), opt.dhid, opt.dwin)) -- batch_size table of (sent_len - 4) x hid_dim
+  temp_seq:add(nn.TemporalConvolution(train_data.state_dim, opt.dhid, opt.dwin)) -- batch_size table of (sent_len - 4) x hid_dim
   temp_seq:add(nn.Reshape(opt.dhid, 1, true)) -- batch_size table of (sent_len - 4) x hid_dim x 1
   temp:add(nn.Sequencer(temp_seq))
   temp:add(nn.JoinTable(3)) -- (sent_len - 4) x hid_dim x batch_size
@@ -103,7 +103,7 @@ function train(train_data, test_data, model, criterion)
   for t = 1, opt.epochs do
     model:training()
     print("Training epoch: " .. t)
-    -- Assuming data is in format data[sentlen] = { nsent x sentlen tensor, nsent x sentlen tensor }
+    -- Assuming data is in format data[sentlen] = { nsent x sentlen x state_dim tensor, nsent x sentlen tensor }
     for i = 1, train_data.nlengths do
       local sentlen = train_data.lengths[i]
       print(sentlen)
@@ -117,7 +117,7 @@ function train(train_data, test_data, model, criterion)
           if sequence_len > opt.dwin then
             local train_input_mb = train_data[sentlen][1][{
               { batch_idx + 1, batch_idx + batch_size },
-              { seq_idx + 1, seq_idx + sequence_len }}] -- batch_size x senquence_len tensor
+              { seq_idx + 1, seq_idx + sequence_len }}] -- batch_size x senquence_len x state_dim tensor
             local train_output_mb = train_data[sentlen][2][{
               { batch_idx + 1, batch_idx + batch_size },
               { seq_idx + torch.floor(opt.dwin/2) + 1, seq_idx + sequence_len - torch.floor(opt.dwin/2)}}]
