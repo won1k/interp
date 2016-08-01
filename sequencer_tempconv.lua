@@ -25,7 +25,7 @@ cmd:option('-param_init', 0.05, 'initial parameter values')
 local data = torch.class('data')
 function data:__init(data_file, tag_file)
    local f = hdf5.open(data_file, 'r')
-   local g = hdf5.open(tag_filem 'r')
+   local g = hdf5.open(tag_file, 'r')
    self.input = {}
    self.output = {}
    self.lengths = f:read('sent_lens'):all():long()
