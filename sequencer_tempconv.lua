@@ -44,7 +44,7 @@ function data:__init(data_file, tag_file)
      self.output[len] = g:read(tostring(len) .. "_output"):all():double()
      for j = 1, nsent do
        for k = 1, len do
-         self.input[len][j][l] = states[curr_idx]
+         self.input[len][j][k] = states[curr_idx]
          curr_idx = curr_idx + 1
        end
      end
