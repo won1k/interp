@@ -6,7 +6,9 @@ cmd = torch.CmdLine()
 
 -- Cmd Args
 cmd:option('-datafile', 'checkpoint_seq/lstm_states.h5', 'data file')
+cmd:option('-tagfile', 'convert_seq/data.hdf5', 'tag file for training')
 cmd:option('-testfile', 'checkpoint_seq/lstm_states_test.h5', 'raw words for test')
+cmd:option('-testtagfile', 'convert_seq/data_test.hdf5', 'tag file for test')
 cmd:option('-savefile', 'checkpoint_seq/tempconv', 'output file for checkpoints')
 cmd:option('-testoutfile', 'seq_test_results.hdf5', 'output file for test')
 cmd:option('-gpu', 0, 'whether to use gpu')
@@ -216,8 +218,8 @@ function main()
     end
 
     -- Load training data
-    local train_data = data.new(opt.datafile)
-    local test_data = data.new(opt.testfile)
+    local train_data = data.new(opt.datafile, opt.tagfile)
+    local test_data = data.new(opt.testfile, opt.testtagfile)
 
     -- Create model
     local h = hdf5.open(opt.ltweights, 'r')
