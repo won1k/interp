@@ -222,9 +222,7 @@ function main()
     --local test_data = data.new(opt.testfile, opt.testtagfile)
 
     -- Create model
-    local h = hdf5.open(opt.ltweights, 'r')
-		local lt_weights = h:read('weights'):all():double()
-    local model, criterion = make_model(train_data, lt_weights)
+    local model, criterion = make_model(train_data)
 
     -- Train.
     train(train_data, test_data, model, criterion)
