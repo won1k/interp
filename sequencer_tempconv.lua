@@ -14,7 +14,7 @@ cmd:option('-testoutfile', 'seq_test_results.hdf5', 'output file for test')
 cmd:option('-gpu', 0, 'whether to use gpu')
 
 -- Hyperparameters
-cmd:option('-lambda', 0.01, 'learning rate')
+cmd:option('-learning_rate', 0.01, 'learning rate')
 cmd:option('-epochs', 30, 'epochs')
 cmd:option('-bsize', 32, 'mini-batch size')
 cmd:option('-seqlen', 20, 'seq-len size')
@@ -131,7 +131,7 @@ function train(train_data, test_data, model, criterion)
             model:zeroGradParameters()
             model:backward(train_input_mb, criterion:backward(model.output, train_output_mb))
             LTgrad:zero()
-            model:updateParameters(opt.lambda)
+            model:updateParameters(opt.learning_rate)
           end
         end
       end
