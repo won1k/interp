@@ -219,7 +219,7 @@ function main()
 
     -- Load training data
     local train_data = data.new(opt.datafile, opt.tagfile)
-    local test_data = data.new(opt.testfile, opt.testtagfile)
+    --local test_data = data.new(opt.testfile, opt.testtagfile)
 
     -- Create model
     local h = hdf5.open(opt.ltweights, 'r')
