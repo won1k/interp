@@ -98,6 +98,7 @@ function make_model(train_data) -- batch_size x sentlen x state_dim tensor input
 end
 
 function train(train_data, test_data, model, criterion)
+  local last_score = 1e9
   local params, gradParams = model:getParameters()
   params:uniform(-opt.param_init, opt.param_init)
   -- Get params to prevent LT weights update
@@ -140,6 +141,11 @@ function train(train_data, test_data, model, criterion)
     local savefile = string.format('%s_epoch%.2f_%.2f.t7', opt.savefile, t, score)
     torch.save(savefile, model)
     print('saving checkpoint to ' .. savefile)
+
+    if score > last_score - .3 then
+       opt.learning_rate = opt.learning_rate / 2
+    end
+    last_score = score
   end
 end
 
@@ -219,7 +225,7 @@ function main()
 
     -- Load training data
     local train_data = data.new(opt.datafile, opt.tagfile)
-    --local test_data = data.new(opt.testfile, opt.testtagfile)
+    local test_data = data.new(opt.testfile, opt.testtagfile)
 
     -- Create model
     local model, criterion = make_model(train_data)
