@@ -125,7 +125,7 @@ def get_data(args):
         f["nfeatures"] = np.array([target_indexer.counter - 1], dtype=int)
         f["nclasses_pos"] = np.array([target_indexer.pos_counter - 1], dtype=int)
         f["nclasses_chunk"] = np.array([target_indexer.chunk_counter - 1], dtype=int)
-        sequencer_template(args.trainfile, sentences, pos_seqs, chunk_seqs)
+        sequencer_template(datafile, sentences, pos_seqs, chunk_seqs)
 
     convert(args.trainfile, args.outputfile + ".hdf5")
     target_indexer.lock()
