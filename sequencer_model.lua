@@ -32,14 +32,14 @@ function data:__init(opt, data_file)
 
    self.lengths = f:read('sent_lens'):all()
    self.max_len = f:read('max_len'):all()[1]
-   self.nclasses = f:read('nclasses'):all():long()[1]
+   self.nclasses = f:read('nclasses_chunk'):all():long()[1]
    self.nfeatures = f:read('nfeatures'):all():long()[1]
    self.length = self.lengths:size(1)
 
    for i = 1, self.length do
      local len = self.lengths[i]
      self.input[len] = f:read(tostring(len)):all():double()
-     self.output[len] = f:read(tostring(len) .. "_output"):all():double()
+     self.output[len] = f:read(tostring(len) .. "_chunks"):all():double()
      if opt.gpu > 0 then
        self.input[len] = self.input[len]:cuda()
        self.output[len] = self.output[len]:cuda()
