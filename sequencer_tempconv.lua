@@ -41,7 +41,7 @@ function data:__init(data_file, tag_file)
      local len = self.lengths[i]
      local nsent = self.nsent[i]
      self.input[len] = torch.Tensor(nsent, len, self.state_dim)
-     self.output[len] = g:read(tostring(len) .. "_output"):all():double()
+     self.output[len] = g:read(tostring(len) .. "_chunks"):all():double()
      for j = 1, nsent do
        for k = 1, len do
          self.input[len][j][k] = states[curr_idx]
