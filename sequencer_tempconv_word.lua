@@ -13,7 +13,7 @@ cmd:option('-ltweights', 'embeddings/lstm_LT.h5', 'file containing LT weights')
 cmd:option('-gpu', 0, 'whether to use gpu')
 
 -- Hyperparameters
-cmd:option('-lambda', 0.01, 'learning rate')
+cmd:option('-learning_rate', 1, 'learning rate')
 cmd:option('-epochs', 30, 'epochs')
 cmd:option('-bsize', 32, 'mini-batch size')
 cmd:option('-seqlen', 20, 'seq-len size')
