@@ -9,7 +9,6 @@ cmd:option('-datafile', 'convert_seq/data.hdf5', 'data file')
 cmd:option('-testfile', 'convert_seq/data_test.hdf5', 'raw words for test')
 cmd:option('-savefile', 'checkpoint_seq/word', 'output file for checkpoints')
 cmd:option('-testoutfile', 'seq_test_results_word.hdf5', 'output file for test')
-cmd:option('-word', 1, 'whether using words (1) or LSTM states (0)')
 cmd:option('-ltweights', 'embeddings/lstm_LT.h5', 'file containing LT weights')
 cmd:option('-gpu', 0, 'whether to use gpu')
 
@@ -30,12 +29,12 @@ function data:__init(data_file)
    self.lengths = f:read('sent_lens'):all():long()
    self.max_len = f:read('max_len'):all()[1]
    self.nlengths = self.lengths:size(1)
-   self.nclasses = f:read('nclasses'):all():long()[1]
+   self.nclasses = f:read('nclasses_chunk'):all():long()[1]
    self.nfeatures = f:read('nfeatures'):all():long()[1]
    for i = 1, self.nlengths do
      local len = self.lengths[i]
      self.input[len] = f:read(tostring(len)):all():double()
-     self.output[len] = f:read(tostring(len) .. "_output"):all():double()
+     self.output[len] = f:read(tostring(len) .. "_chunks"):all():double()
      if opt.gpu > 0 then
        self.input[len] = self.input[len]:cuda()
        self.output[len] = self.output[len]:cuda()
@@ -200,6 +199,7 @@ function predict(data, model)
     end
   end
   output:write('nlengths', torch.Tensor(nlengths):long())
+  output:write('dwin', torch.Tensor{opt.dwin}:long())
   print('Accuracy', accuracy / total)
 end
 
