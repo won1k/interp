@@ -14,7 +14,7 @@ import csv
 def postprocess(args):
     f = h5py.File(args.predfile, 'r')
     sentlens = list(f['nlengths'])
-    dwin = int(f['dwin'][0])
+    dwin = 5
     test_pred = {}
     nsent = {}
     for length in sentlens:
