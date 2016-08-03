@@ -28,14 +28,14 @@ def postprocess(args):
     with open(args.rawtestfile, 'r') as f:
         f = csv.reader(f, delimiter = ' ')
         for i, row in enumerate(f):
-            raw_test.append(row)
             if len(row) > 0:
+                raw_test.append(row)
                 sent_len += 1
             else:
                 if sent_len <= dwin:
-                    start_idx = i
+                    start_idx += sent_len
                 sent_len = 0
-    raw_test = raw_test[start_idx + 1:]
+    raw_test = raw_test[start_idx:]
 
     chunk_dict = {}
     with open(args.dictfile) as f:
@@ -43,24 +43,16 @@ def postprocess(args):
         for row in f:
             chunk_dict[int(row[1])] = row[0]
 
-
     output = []
-    len_idx = 0
-    sent_idx = 0
-    word_idx = 0
-    for row in raw_test:
-        length = sentlens[len_idx]
-        if len(row) > 0:
-            output.append(row + [ chunk_dict[ test_pred[length][sent_idx][word_idx] ] ])
-            word_idx += 1
-            if word_idx > length - dwin:
-                word_idx = 0
-                sent_idx += 1
-            if sent_idx > nsent[length]:
-                sent_idx = 0
-                len_idx += 1
-        else:
+    idx = 0
+    for length in sentlens:
+        for sent_idx in range(nsent[length]):
+            idx += dwin/2
+            for word_idx in range(length - dwin + 1):
+                output.append(raw_test[idx] + [ chunk_dict[test_pred[length][sent_idx][word_idx]] ])
+                idx += 1
             output.append([])
+            idx += dwin/2
 
     with open(args.outputfile, 'w') as f:
         for row in output:
