@@ -120,7 +120,7 @@ function train(train_data, test_data, model, criterion)
             model:zeroGradParameters()
             model:backward(train_input_mb, criterion:backward(model.output, train_output_mb))
             LTgrad:zero()
-            model:updateParameters(opt.lambda)
+            model:updateParameters(opt.learning_rate)
           end
         end
       end
