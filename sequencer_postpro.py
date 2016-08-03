@@ -12,6 +12,16 @@ import itertools
 import csv
 
 def postprocess(args):
+    f = h5py.File(args.predfile, 'r')
+    sentlens = f['nlengths']
+    dwin = int(f['dwin'][0])
+    test_pred = {}
+    nsent = {}
+    for length in sentlens:
+        test_pred[length] = f[str(length)]
+        nsent[length] = len(test_pred[length])
+    f.close()
+
     raw_test = []
     start_idx = 0
     sent_len = 0
@@ -25,22 +35,14 @@ def postprocess(args):
                 if sent_len <= dwin:
                     start_idx = i
                 sent_len = 0
+    raw_test = raw_test[start_idx + 1:]
 
     chunk_dict = {}
     with open(args.dictfile) as f:
         f = csv.reader(f, delimiter = ' ')
         for row in f:
             chunk_dict[int(row[1])] = row[0]
-    f = h5py.File(args.predfile, 'r')
-    sentlens = f['nlengths']
-    dwin = int(f['dwin'][0])
 
-    test_pred = {}
-    nsent = {}
-    for length in sentlens:
-        test_pred[length] = f[str(length)]
-        nsent[length] = len(test_pred[length])
-    raw_test = raw_test[start_idx + 1:]
 
     output = []
     len_idx = 0
