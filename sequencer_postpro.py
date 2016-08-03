@@ -72,7 +72,7 @@ def main(arguments):
         formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('rawtestfile', help="Raw chunking test text file") # sequencer_test.txt
     parser.add_argument('dictfile', help="Chunking tag dictionary file") # convert_seq/train_parsed_chunks.dict
-    parser.add_argument('predfile', help="Test chunk tag prediction raw_test file") # sequencer_test_results.hdf5
+    parser.add_argument('predfile', help="Test chunk tag prediction raw_test file") # seq_test_results.hdf5
     parser.add_argument('outputfile', help="Text output for conll", type=str) # sequencer_test_conll.txt
     args = parser.parse_args(arguments)
     postprocess(args)
