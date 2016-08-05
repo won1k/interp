@@ -57,6 +57,7 @@ function data:__init(data_file, tag_file)
        self.input[len] = self.input[len]:cuda()
        self.output[len] = self.output[len]:cuda()
      end
+     print(self.input[len]:size(), self.output[len]:size())
    end
    f:close()
    g:close()
