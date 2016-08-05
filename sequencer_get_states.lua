@@ -11,7 +11,8 @@ cmd:option('-num_layers', 2, 'number of layers in the LSTM')
 cmd:option('-data_file','convert_seq/data.hdf5','path to data file in hdf5 format')
 cmd:option('-checkpoint_file','checkpoint_seq/lm_epoch30.00_1.13.t7','path to model checkpoint file in t7 format')
 cmd:option('-output_file','checkpoint_seq/lstm_states.h5','path to output LSTM states in hdf5 format')
-cmd:option('-gpu',1,'which gpu to use. -1 = use CPU')
+cmd:option('-gpu', 1, 'which gpu to use. -1 = use CPU')
+cmd:option('-wide', 1, '1 if wide convolution (padded), 0 otherwise')
 opt = cmd:parse(arg)
 
 if opt.gpu >= 0 then
@@ -110,6 +111,9 @@ function eval1(data, model)
      local d = data[sentlen] -- sent_len x nsent tensors
   	 local input, goal = d[1], d[2]
      local nsent = input:size(2)
+     if opt.wide > 0 then
+       sentlen = sentlen + 2 * torch.floor(data.dwin/2)
+     end
      for b = 1, nsent do
        for j = 1, sentlen do
           out = model:forward(input:narrow(1,j,1)) -- 1 x nsent tensor

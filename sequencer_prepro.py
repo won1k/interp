@@ -87,7 +87,19 @@ def get_data(args):
                     print >>out, word, pos, chunk
                 print >>out, ""
 
-    def convert(datafile, outfile):
+    def add_padding(sentences, pos_seqs, chunk_seqs, sent_lens, dwin):
+        for length in sent_lens:
+            for idx, sentence in enumerate(sentences[length]):
+                sentences[length][idx] = [target_indexer.convert('PAD')] * (dwin/2) + \
+                    sentences[length][idx] + [target_indexer.convert('PAD')] * (dwin/2)
+                pos_seqs[length][idx] = [target_indexer.convert_pos('PAD')] * (dwin/2) + \
+                    pos_seqs[length][idx] + [target_indexer.convert_pos('PAD')] * (dwin/2)
+                chunk_seqs[length][idx] = [target_indexer.convert_chunk('PAD')] * (dwin/2) + \
+                    chunk_seqs[length][idx] + [target_indexer.convert_chunk('PAD')] * (dwin/2)
+        return sentences, pos_seqs, chunk_seqs
+
+    def convert(datafile, outfile, dwin):
+        # Parse and convert data
         with open(datafile, 'r') as f:
             sentences = {}
             pos_seqs = {}
@@ -114,22 +126,30 @@ def get_data(args):
                 sentence.append(target_indexer.convert(line.strip().split(' ')[0]))
                 pos_seq.append(target_indexer.convert_pos(line.strip().split(' ')[1]))
                 chunk_seq.append(target_indexer.convert_chunk(line.strip().split(' ')[2]))
-        f = h5py.File(outfile, "w")
         sent_lens = sentences.keys()
+
+        # Reoutput raw data ordered by length
+        sequencer_template(datafile, sentences, pos_seqs, chunk_seqs)
+
+        # Add padding for windowed models
+        sentences, pos_seqs, chunk_seqs = add_padding(sentences, pos_seqs, chunk_seqs, sent_lens, dwin)
+
+        # Output HDF5 for torch
+        f = h5py.File(outfile, "w")
         f["sent_lens"] = np.array(sent_lens, dtype=int)
-        for sent_len in sent_lens:
-            f[str(sent_len)] = np.array(sentences[sent_len], dtype=int)
-            f[str(sent_len) + "_pos"] = np.array(pos_seqs[sent_len], dtype = int)
-            f[str(sent_len) + "_chunks"] = np.array(chunk_seqs[sent_len], dtype = int)
+        for length in sent_lens:
+            f[str(length)] = np.array(sentences[length], dtype=int)
+            f[str(length) + "_pos"] = np.array(pos_seqs[length], dtype = int)
+            f[str(length) + "_chunks"] = np.array(chunk_seqs[length], dtype = int)
         f["max_len"] = np.array([target_indexer.max_len], dtype=int)
         f["nfeatures"] = np.array([target_indexer.counter - 1], dtype=int)
         f["nclasses_pos"] = np.array([target_indexer.pos_counter - 1], dtype=int)
         f["nclasses_chunk"] = np.array([target_indexer.chunk_counter - 1], dtype=int)
-        sequencer_template(datafile, sentences, pos_seqs, chunk_seqs)
+        f["dwin"] = np.array([dwin], dtype=int)
 
-    convert(args.trainfile, args.outputfile + ".hdf5")
+    convert(args.trainfile, args.outputfile + ".hdf5", args.dwin)
     target_indexer.lock()
-    convert(args.testfile, args.outputfile + "_test" + ".hdf5")
+    convert(args.testfile, args.outputfile + "_test" + ".hdf5", args.dwin)
     target_indexer.write(args.outputfile + ".dict")
     target_indexer.write_chunks(args.outputfile + ".chunks.dict")
     target_indexer.write_pos(args.outputfile + ".pos.dict")
@@ -142,6 +162,7 @@ def main(arguments):
     parser.add_argument('trainfile', help="Raw chunking text file", type=str) # train.txt
     parser.add_argument('testfile', help="Raw chunking test text file", type=str) # test.txt
     parser.add_argument('outputfile', help="HDF5 output file", type=str) # convert_seq/data
+    parser.add_argument('dwin', help="Window dimension (0 if no padding)", type=int) # 5
     args = parser.parse_args(arguments)
 
     # Do conversion

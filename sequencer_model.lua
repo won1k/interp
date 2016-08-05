@@ -13,6 +13,7 @@ cmd:option('-bsize', 32, 'batch size')
 cmd:option('-seqlen', 20, 'sequence length')
 cmd:option('-max_grad_norm', 5, 'max l2-norm of concatenation of all gradParam tensors')
 cmd:option('-dropoutProb', 0.5, 'dropoff param')
+cmd:option('-wide', 1, '1 if wide convolution (padded), 0 otherwise')
 
 cmd:option('-data_file','convert_seq/data.hdf5','data directory. Should contain data.hdf5 with input data')
 cmd:option('-val_data_file','convert_seq/data_test.hdf5','data directory. Should contain data.hdf5 with input data')
@@ -35,6 +36,7 @@ function data:__init(opt, data_file)
    self.nclasses = f:read('nclasses_chunk'):all():long()[1]
    self.nfeatures = f:read('nfeatures'):all():long()[1]
    self.length = self.lengths:size(1)
+   self.dwin = f:read('dwin'):all():long()[1]
 
    for i = 1, self.length do
      local len = self.lengths[i]
@@ -77,6 +79,10 @@ function train(data, valid_data, model, criterion)
          local d = data[sentlen]
          local input, output = d[1], d[2]
          local nsent = input:size(2) -- sentlen x nsent input
+         -- If wide convolution, add length for padding
+         if opt.wide > 0 then
+           sentlen = sentlen + 2 * torch.floor(data.dwin/2)
+         end
          for sent_idx = 1, torch.ceil(nsent / opt.bsize) do
            local batch_idx = (sent_idx - 1) * opt.bsize
            local batch_size = math.min(sent_idx * opt.bsize, nsent) - batch_idx
@@ -129,6 +135,9 @@ function eval(data, model)
       local d = data[sentlen]
       local input, output = d[1], d[2]
       local nsent = input:size(2)
+      if opt.wide > 0 then
+        sentlen = sentlen + 2 * torch.floor(data.dwin/2)
+      end
       output = nn.SplitTable(1):forward(output)
       out = model:forward(input)
       nll = nll + criterion:forward(out, output) * nsent
