@@ -34,6 +34,7 @@ function data:__init(data_file)
    self.nclasses = f:read('nclasses_chunk'):all():long()[1]
    self.nfeatures = f:read('nfeatures'):all():long()[1]
    self.length = self.lengths:size(1)
+   self.dwin = f:read('dwin'):all():long()[1]
 
    for i = 1, self.length do
      local len = self.lengths[i]
