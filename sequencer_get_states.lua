@@ -75,6 +75,9 @@ total_count = 0
 for i = 1, data.length do
    local len = data.lengths[i]
    table.insert(nsent, data.input[len]:size(1))
+   if opt.wide > 0 then
+     len = len + 2 * torch.floor(data.dwin/2)
+   end
    total_count = total_count + len * nsent[#nsent]
 end
 
