@@ -161,7 +161,7 @@ def main(arguments):
       formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('trainfile', help="Raw chunking text file", type=str) # train.txt
     parser.add_argument('testfile', help="Raw chunking test text file", type=str) # test.txt
-    parser.add_argument('outputfile', help="HDF5 output file", type=str) # convert_seq/data
+    parser.add_argument('outputfile', help="HDF5 output file", type=str) # convert_seq/data_pad
     parser.add_argument('dwin', help="Window dimension (0 if no padding)", type=int) # 5
     args = parser.parse_args(arguments)
 
