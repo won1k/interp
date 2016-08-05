@@ -108,14 +108,12 @@ function train(train_data, test_data, model, criterion)
     model:training()
     print("Training epoch: " .. t)
     -- Assuming data is in format data[sentlen] = { nsent x sentlen x state_dim tensor, nsent x sentlen tensor }
-    local start_idx = train_data.dwin -- index at which to start running model
     for i = 1, train_data.nlengths do
       local sentlen = train_data.lengths[i]
       print(sentlen)
       local nsent = train_data[sentlen][1]:size(1)
       if opt.wide > 0 then
         sentlen = sentlen + 2 * torch.floor(train_data.dwin/2)
-        start_idx = 0
       end
       for sent_idx = 1, torch.ceil(nsent / opt.bsize) do
         local batch_idx = (sent_idx - 1) * opt.bsize
@@ -123,10 +121,10 @@ function train(train_data, test_data, model, criterion)
         for col_idx = 1, torch.ceil(sentlen / opt.seqlen) do
           local seq_idx = (col_idx - 1) * opt.seqlen
           local sequence_len = math.min(col_idx * opt.seqlen, sentlen) - seq_idx
-          if sequence_len > start_idx then
+          if sequence_len > train_data.dwin then
             local train_input_mb = train_data[sentlen][1][{
               { batch_idx + 1, batch_idx + batch_size },
-              { seq_idx + 1, seq_idx + sequence_len }}] -- batch_size x senquence_len x state_dim tensor
+              { seq_idx + 1, seq_idx + sequence_len }}] -- batch_size x sequence_len x state_dim tensor
             local train_output_mb = train_data[sentlen][2][{
               { batch_idx + 1, batch_idx + batch_size },
               { seq_idx + torch.floor(train_data.dwin/2) + 1, seq_idx + sequence_len - torch.floor(train_data.dwin/2)}}]
@@ -170,23 +168,15 @@ function eval(data, model, criterion)
     for sent_idx = 1, torch.ceil(nsent / opt.bsize) do
       local batch_idx = (sent_idx - 1) * opt.bsize
       local batch_size = math.min(sent_idx * opt.bsize, nsent) - batch_idx
-      for col_idx = 1, torch.ceil(sentlen / opt.seqlen) do
-        local seq_idx = (col_idx - 1) * opt.seqlen
-        local sequence_len = math.min(col_idx * opt.seqlen, sentlen) - seq_idx
-        if sequence_len > start_idx then
-          local test_input_mb = data[sentlen][1][{
-            { batch_idx + 1, batch_idx + batch_size },
-            { seq_idx + 1, seq_idx + sequence_len }}] -- batch_size x senquence_len tensor
-          local test_output_mb = data[sentlen][2][{
-            { batch_idx + 1, batch_idx + batch_size },
-            { seq_idx + torch.floor(data.dwin/2) + 1, seq_idx + sequence_len - torch.floor(data.dwin/2)}}]
+      local test_input_mb = data[sentlen][1][{
+        { batch_idx + 1, batch_idx + batch_size }}] -- batch_size x senquence_len tensor
+      local test_output_mb = data[sentlen][2][{
+        { batch_idx + 1, batch_idx + batch_size }}]
             -- batch_size x (sequence_len - 4)
-          test_output_mb = nn.SplitTable(2):forward(test_output_mb)
+      test_output_mb = nn.SplitTable(2):forward(test_output_mb)
 
-          nll = nll + criterion:forward(model:forward(test_input_mb), test_output_mb) * batch_size
-          total = total + sequence_len * batch_size
-        end
-      end
+      nll = nll + criterion:forward(model:forward(test_input_mb), test_output_mb) * batch_size
+      total = total + sequence_len * batch_size
     end
     model:forget()
   end
