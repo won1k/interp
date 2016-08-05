@@ -129,7 +129,7 @@ function train(train_data, test_data, model, criterion)
               { seq_idx + 1, seq_idx + sequence_len }}] -- batch_size x senquence_len x state_dim tensor
             local train_output_mb = train_data[sentlen][2][{
               { batch_idx + 1, batch_idx + batch_size },
-              { seq_idx + torch.floor(data.dwin/2) + 1, seq_idx + sequence_len - torch.floor(data.dwin/2)}}]
+              { seq_idx + torch.floor(train_data.dwin/2) + 1, seq_idx + sequence_len - torch.floor(train_data.dwin/2)}}]
               -- batch_size x (sequence_len - 4)
             train_output_mb = nn.SplitTable(2):forward(train_output_mb) -- (sequence_len - 4) table of batch_size
 
