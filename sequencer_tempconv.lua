@@ -180,7 +180,7 @@ function eval(data, model, criterion)
       test_output_mb = nn.SplitTable(2):forward(test_output_mb)
 
       nll = nll + criterion:forward(model:forward(test_input_mb), test_output_mb) * batch_size
-      total = total + sequence_len * batch_size
+      total = total + sent_len * batch_size
     end
     model:forget()
   end
