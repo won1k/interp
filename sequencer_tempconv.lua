@@ -40,14 +40,15 @@ function data:__init(data_file, tag_file)
    local states = f:read('states2'):all()
    for i = 1, self.nlengths do
      local len = self.lengths[i]
+     local pad_len = len
      local nsent = self.nsent[i]
-    self.output[len] = g:read(tostring(len) .. "_chunks"):all():double()
+     self.output[len] = g:read(tostring(len) .. "_chunks"):all():double()
      if opt.wide > 0 then
-       len = len + 2 * torch.floor(self.dwin/2)
+       pad_len = len + 2 * torch.floor(self.dwin/2)
      end
-     self.input[len] = torch.Tensor(nsent, len, self.state_dim)
+     self.input[len] = torch.Tensor(nsent, pad_len, self.state_dim)
      for j = 1, nsent do
-       for k = 1, len do
+       for k = 1, pad_len do
          self.input[len][j][k] = states[curr_idx]
          curr_idx = curr_idx + 1
        end
