@@ -57,7 +57,6 @@ function data:__init(data_file, tag_file)
        self.input[len] = self.input[len]:cuda()
        self.output[len] = self.output[len]:cuda()
      end
-     print(self.input[len]:size(), self.output[len]:size())
    end
    f:close()
    g:close()
@@ -116,7 +115,8 @@ function train(train_data, test_data, model, criterion)
     for i = 1, train_data.nlengths do
       local sentlen = train_data.lengths[i]
       print(sentlen)
-      local nsent = train_data[sentlen][1]:size(1)
+      local d = train_data[sentlen]
+      local nsent = d[1]:size(1)
       if opt.wide > 0 then
         sentlen = sentlen + 2 * torch.floor(train_data.dwin/2)
       end
@@ -127,10 +127,10 @@ function train(train_data, test_data, model, criterion)
           local seq_idx = (col_idx - 1) * opt.seqlen
           local sequence_len = math.min(col_idx * opt.seqlen, sentlen) - seq_idx
           if sequence_len > train_data.dwin then
-            local train_input_mb = train_data[sentlen][1][{
+            local train_input_mb = d[1][{
               { batch_idx + 1, batch_idx + batch_size },
               { seq_idx + 1, seq_idx + sequence_len }}] -- batch_size x sequence_len x state_dim tensor
-            local train_output_mb = train_data[sentlen][2][{
+            local train_output_mb = d[2][{
               { batch_idx + 1, batch_idx + batch_size },
               { seq_idx + torch.floor(train_data.dwin/2) + 1, seq_idx + sequence_len - torch.floor(train_data.dwin/2)}}]
               -- batch_size x (sequence_len - 4)
@@ -162,20 +162,19 @@ function eval(data, model, criterion)
   model:evaluate()
   local nll = 0
   local total = 0
-  local start_idx = data.dwin
   for i = 1, data.nlengths do
     local sentlen = data.lengths[i]
-    local nsent = data[sentlen][1]:size(1)
+    local d = data[sentlen]
+    local nsent = d[1]:size(1)
     if opt.wide > 0 then
       sentlen = sentlen + 2 * torch.floor(data.dwin/2)
-      start_idx = 0
     end
     for sent_idx = 1, torch.ceil(nsent / opt.bsize) do
       local batch_idx = (sent_idx - 1) * opt.bsize
       local batch_size = math.min(sent_idx * opt.bsize, nsent) - batch_idx
-      local test_input_mb = data[sentlen][1][{
+      local test_input_mb = d[1][{
         { batch_idx + 1, batch_idx + batch_size }}] -- batch_size x senquence_len tensor
-      local test_output_mb = data[sentlen][2][{
+      local test_output_mb = d[2][{
         { batch_idx + 1, batch_idx + batch_size }}]
             -- batch_size x (sequence_len - 4)
       test_output_mb = nn.SplitTable(2):forward(test_output_mb)
