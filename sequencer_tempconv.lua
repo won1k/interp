@@ -41,6 +41,9 @@ function data:__init(data_file, tag_file)
    for i = 1, self.nlengths do
      local len = self.lengths[i]
      local nsent = self.nsent[i]
+     if opt.wide > 0 then
+       len = len + 2 * torch.floor(self.dwin/2)
+     end
      self.input[len] = torch.Tensor(nsent, len, self.state_dim)
      self.output[len] = g:read(tostring(len) .. "_chunks"):all():double()
      for j = 1, nsent do
@@ -49,6 +52,7 @@ function data:__init(data_file, tag_file)
          curr_idx = curr_idx + 1
        end
      end
+     print(states:size(1), curr_idx)
      if opt.gpu > 0 then
        self.input[len] = self.input[len]:cuda()
        self.output[len] = self.output[len]:cuda()
