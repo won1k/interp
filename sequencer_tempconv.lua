@@ -34,7 +34,6 @@ function data:__init(data_file, tag_file)
    self.nclasses = f:read('nclasses'):all():long()[1]
    self.state_dim = f:read('state_dim'):all():long()[1]
    self.dwin = g:read('dwin'):all():long()[1]
-
    -- Load sequencer data from total x 650 state file
    local curr_idx = 1
    local states = f:read('states2'):all()
@@ -201,7 +200,7 @@ function predict(data, model)
       table.insert(nlengths, sentlen)
       local test_input = data[sentlen][1] -- nsent x senquence_len tensor
       local test_output = data[sentlen][2][{{},
-        { 1 + torch.floor(data.dwin/2), sentlen - torch.floor(data.dwin/2)}}] -- batch_size x (sequence_len - 4)
+        { 1 + torch.floor(data.dwin/2), sentlen + torch.floor(data.dwin/2)}}] -- batch_size x (sequence_len - 4)
       local test_pred = model:forward(test_input)
       local maxidx = {}
       for j = 1, #test_pred do
@@ -216,6 +215,8 @@ function predict(data, model)
   end
   output:write('dwin', torch.Tensor{data.dwin}:long())
   output:write('nlengths', torch.Tensor(nlengths):long())
+  output:write('accuracy', torch.Tensor{accuracy/total}:double())
+  output:close()
   print('Accuracy', accuracy / total)
 end
 
