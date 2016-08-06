@@ -120,7 +120,7 @@ function main()
 
     -- Load training data
     local train_input = f:read('states2'):all():double()
-    local train_output = g:read('chunks'):all():long()
+    local train_output = g:read('tags'):all():long()
 		local test_input = h:read('states2'):all():double()
 		local test_output = j:read('tags'):all():long()
 		if opt.gpu > 0 then
