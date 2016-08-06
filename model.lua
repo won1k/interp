@@ -29,7 +29,7 @@ function data:__init(opt, data_file)
    self.target_output = f:read('target_output'):all()
    self.target_size = f:read('target_size'):all()[1]
 
-   self.length = f:read('sent_lens'):all()[1]
+   self.length = self.target:size(1)
    self.seqlength = self.target:size(3)
    self.batchlength = self.target:size(2)
 end

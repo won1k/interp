@@ -193,27 +193,36 @@ function predict(data, model)
   local output = hdf5.open(opt.testoutfile, 'w')
   local accuracy = 0
   local total = 0
+  local start = data.dwin
+  local lengths = {}
+  if opt.wide > 0 then
+    start = 0
+  end
   for i = 1, data.nlengths do
     local sentlen = data.lengths[i]
-    local test_input = data[sentlen][1] -- nsent x senquence_len tensor
-    local test_output = data[sentlen][2][{{},
-      { 1 + torch.floor(data.dwin/2), sentlen + torch.floor(data.dwin/2)}}] -- batch_size x (sequence_len - 4)
-    local test_pred = model:forward(test_input)
-    local maxidx = {}
-    for j = 1, #test_pred do
-      _, maxidx[j] = test_pred[j]:max(2)
+    if sentlen > start then
+      table.insert(lengths, sentlen)
+      local test_input = data[sentlen][1] -- nsent x senquence_len tensor
+      local test_output = data[sentlen][2][{{},
+        { 1 + torch.floor(data.dwin/2), sentlen + torch.floor(data.dwin/2)}}] -- batch_size x (sequence_len - 4)
+      local test_pred = model:forward(test_input)
+      local maxidx = {}
+      for j = 1, #test_pred do
+        _, maxidx[j] = test_pred[j]:max(2)
+      end
+      maxidx = nn.JoinTable(2):forward(maxidx)
+      output:write(tostring(sentlen), maxidx:long())
+      output:write(tostring(sentlen) .. '_target', test_output:long())
+      accuracy = accuracy + torch.eq(maxidx:long(), test_output:long()):sum()
+      total = total + test_output:long():ge(0):sum()
     end
-    maxidx = nn.JoinTable(2):forward(maxidx)
-    output:write(tostring(sentlen), maxidx:long())
-    output:write(tostring(sentlen) .. '_target', test_output:long())
-    accuracy = accuracy + torch.eq(maxidx:long(), test_output:long()):sum()
-    total = total + test_output:long():ge(0):sum()
   end
   output:write('dwin', torch.Tensor{data.dwin}:long())
-  output:write('sent_lens', data.lengths)
-  output:write('accuracy', torch.Tensor{accuracy/total}:double())
+  output:write('sent_lens', torch.Tensor(lengths):long())
+  accuracy = accuracy / total
+  output:write('accuracy', torch.Tensor{accuracy}:double())
   output:close()
-  print('Accuracy', accuracy / total)
+  print('Accuracy', accuracy)
 end
 
 
