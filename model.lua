@@ -140,7 +140,6 @@ function main()
       print('using CUDA on GPU ' .. opt.gpuid .. '...')
       require 'cutorch'
       require 'cunn'
-      cutorch.setDevice(opt.gpuid + 1)
    end
 
    -- Create the data loader class.
