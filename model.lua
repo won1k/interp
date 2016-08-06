@@ -28,6 +28,10 @@ function data:__init(opt, data_file)
    self.target  = f:read('target'):all()
    self.target_output = f:read('target_output'):all()
    self.target_size = f:read('target_size'):all()[1]
+   if opt.gpuid >= 0 then
+     self.target = self.target:cuda()
+     self.target_output = self.target_output:cuda()
+   end
 
    self.length = self.target:size(1)
    self.seqlength = self.target:size(3)
@@ -43,8 +47,8 @@ function data.__index(self, idx)
    if type(idx) == "string" then
       return data[idx]
    else
-      input = self.target[idx]:transpose(1, 2):float()--:cuda()
-      target = nn.SplitTable(2):forward(self.target_output[idx]:float())--:cuda())
+      input = self.target[idx]:transpose(1, 2)
+      target = nn.SplitTable(2):forward(self.target_output[idx])
    end
    return {input, target}
 end
