@@ -34,7 +34,10 @@ def convert_data(tagfile, tag_to_idx):
     with open(tagfile, 'r') as f:
         tags = f.read().split()
         for tag in tags:
-            tag_indices.append(tag_to_idx[tag])
+            try:
+                tag_indices.append(tag_to_idx[tag])
+            except:
+                tag_indices.append(tag_to_idx['O'])
     return np.array(tag_indices, dtype = np.int32)
 
 args = {}

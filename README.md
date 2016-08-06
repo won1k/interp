@@ -16,6 +16,7 @@
 
 # Pipeline (LSTM States)
 
+0) prepro_chunks.py convert/train_parsed_chunks.txt 0 convert/train_parsed_chunks.dict
 1) tempconv.lua [ >> test_results.hdf5 ]
 2) postpro_conll.py test.txt convert/train_parsed_chunks.dict test_results.hdf5 test_conll.txt
 3) ./conlleval.pl < test_conll.txt
