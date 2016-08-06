@@ -19,7 +19,6 @@ if opt.gpuid >= 0 then
    print('using CUDA on GPU ' .. opt.gpuid .. '...')
    require 'cutorch'
    require 'cunn'
-   cutorch.setDevice(opt.gpuid + 1)
    freeMemory, totalMemory = cutorch.getMemoryUsage(1)
 end
 
