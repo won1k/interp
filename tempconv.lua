@@ -87,7 +87,7 @@ function train(train_data, test_data, model, criterion)
 		local score = eval(test_data, model)
 		print("Validation accuracy", score)
 
-		if score < last_score + .005 then
+		if score < last_score + .0005 then
        opt.learning_rate = opt.learning_rate / 2
 			 print("Learning rate", opt.learning_rate)
     end
