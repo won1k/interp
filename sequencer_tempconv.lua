@@ -170,7 +170,7 @@ function eval(data, model, criterion)
     local nsent = d[1]:size(1)
     local start = opt.dwin
     if opt.wide > 0 then
-      sentlen = sentlen + 2 * torch.floor(data.dwin/2)
+      sentlen = sentlen + 2 * torch.floor(opt.dwin/2)
       start = 0
     end
     for sent_idx = 1, torch.ceil(nsent / opt.bsize) do
