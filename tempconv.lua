@@ -139,8 +139,8 @@ function main()
 		end
 
     -- Load training data
-    local train_data = data(opt.datafile, opt.tagfile)
-		local test_data = data(opt.testfile, opt.testtagfile)
+    local train_data = data.new(opt.datafile, opt.tagfile)
+		local test_data = data.new(opt.testfile, opt.testtagfile)
 
 		-- Make model
 		local model, criterion = make_model(train_data)
