@@ -13,6 +13,7 @@ cmd:option('-savefile', 'checkpoint_seq/tempconv', 'output file for checkpoints'
 cmd:option('-testoutfile', 'seq_test_results.hdf5', 'output file for test')
 cmd:option('-gpu', 0, 'whether to use gpu')
 cmd:option('-wide', 1, '1 if wide convolution (padded), 0 otherwise')
+cmd:option('-task', 'chunks', 'chunks or pos')
 
 -- Hyperparameters
 cmd:option('-learning_rate', 0.01, 'learning rate')
@@ -31,7 +32,11 @@ function data:__init(data_file, tag_file)
    self.lengths = f:read('sent_lens'):all():long()
    self.nsent = f:read('nsent'):all():long()
    self.nlengths = self.lengths:size(1)
-   self.nclasses = f:read('nclasses'):all():long()[1]
+   if opt.task == 'chunks' then
+     self.nclasses = g:read('nclasses_chunk'):all():long()[1]
+   else
+     self.nclasses = g:read('nclasses_pos'):all():long()[1]
+   end
    self.state_dim = f:read('state_dim'):all():long()[1]
    self.dwin = g:read('dwin'):all():long()[1]
    -- Load sequencer data from total x 650 state file
@@ -41,7 +46,11 @@ function data:__init(data_file, tag_file)
      local len = self.lengths[i]
      local pad_len = len
      local nsent = self.nsent[i]
-     self.output[len] = g:read(tostring(len) .. "_chunks"):all():double()
+     if opt.task == 'chunks' then
+       self.output[len] = g:read(tostring(len) .. "_chunks"):all():double()
+     else
+       self.output[len] = g:read(tostring(len) .. "_pos"):all():double()
+     end
      if opt.wide > 0 then
        pad_len = len + 2 * torch.floor(self.dwin/2)
      end
@@ -171,11 +180,8 @@ function eval(data, model, criterion)
     for sent_idx = 1, torch.ceil(nsent / opt.bsize) do
       local batch_idx = (sent_idx - 1) * opt.bsize
       local batch_size = math.min(sent_idx * opt.bsize, nsent) - batch_idx
-      local test_input_mb = d[1][{
-        { batch_idx + 1, batch_idx + batch_size }}] -- batch_size x senquence_len tensor
-      local test_output_mb = d[2][{
-        { batch_idx + 1, batch_idx + batch_size }}]
-            -- batch_size x (sequence_len - 4)
+      local test_input_mb = d[1][{{ batch_idx + 1, batch_idx + batch_size }}]
+      local test_output_mb = d[2][{{ batch_idx + 1, batch_idx + batch_size }}]
       test_output_mb = nn.SplitTable(2):forward(test_output_mb)
 
       nll = nll + criterion:forward(model:forward(test_input_mb), test_output_mb) * batch_size

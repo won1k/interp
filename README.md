@@ -27,7 +27,7 @@
 2) postpro_conll.py test.txt convert/train_parsed_chunks.dict word_test_results.hdf5 test_conll_word.txt
 3) ./conlleval.pl < test_conll_word.txt
 
-# Pipeline (Sequencer)
+# Pipeline (Sequencer, LSTM States)
 
 1) sequencer_prepro.py train.txt test.txt convert_seq/data
 2) sequencer_model.lua
@@ -35,6 +35,11 @@
 4) sequencer_tempconv.lua
 5) sequencer_postpro.py sequencer_test.txt convert_seq/train_parsed_chunks.dict sequencer_test_results.hdf5 sequencer_test_conll.txt
 6) ./conlleval.pl < sequencer_test_conll.txt
+
+# Pipeline (Sequencer, Word)
+
+1) sequencer_prepro.py train.txt test.txt convert_seq/data
+2) sequencer_tempconv_word.lua
 
 # Pipeline (POS)
 
