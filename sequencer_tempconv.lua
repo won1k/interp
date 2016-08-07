@@ -86,7 +86,7 @@ function make_model(train_data) -- batch_size x sentlen x state_dim tensor input
   local temp = nn.Sequential()
   temp:add(nn.SplitTable(1)) -- batch_size table of sentlen x state_dim
   local temp_seq = nn.Sequential()
-  temp_seq:add(nn.TemporalConvolution(train_data.state_dim, opt.dhid, train_data.dwin)) -- batch_size table of (sent_len - 4) x hid_dim
+  temp_seq:add(nn.TemporalConvolution(train_data.state_dim, opt.dhid, opt.dwin)) -- batch_size table of (sent_len - 4) x hid_dim
   temp_seq:add(nn.Reshape(opt.dhid, 1, true)) -- batch_size table of (sent_len - 4) x hid_dim x 1
   temp:add(nn.Sequencer(temp_seq))
   temp:add(nn.JoinTable(3)) -- (sent_len - 4) x hid_dim x batch_size
@@ -125,31 +125,25 @@ function train(train_data, test_data, model, criterion)
       print(sentlen)
       local d = train_data[sentlen]
       local nsent = d[1]:size(1)
+      local start = opt.dwin
       if opt.wide > 0 then
-        sentlen = sentlen + 2 * torch.floor(train_data.dwin/2)
+        sentlen = sentlen + 2 * torch.floor(opt.dwin/2)
+        start = 0
       end
       for sent_idx = 1, torch.ceil(nsent / opt.bsize) do
-        local batch_idx = (sent_idx - 1) * opt.bsize
-        local batch_size = math.min(sent_idx * opt.bsize, nsent) - batch_idx
-        for col_idx = 1, torch.ceil(sentlen / opt.seqlen) do
-          local seq_idx = (col_idx - 1) * opt.seqlen
-          local sequence_len = math.min(col_idx * opt.seqlen, sentlen) - seq_idx
-          if sequence_len > train_data.dwin then
-            local train_input_mb = d[1][{
-              { batch_idx + 1, batch_idx + batch_size },
-              { seq_idx + 1, seq_idx + sequence_len }}] -- batch_size x sequence_len x state_dim tensor
-            local train_output_mb = d[2][{
-              { batch_idx + 1, batch_idx + batch_size },
-              { seq_idx + torch.floor(train_data.dwin/2) + 1, seq_idx + sequence_len - torch.floor(train_data.dwin/2)}}]
-              -- batch_size x (sequence_len - 4)
-            train_output_mb = nn.SplitTable(2):forward(train_output_mb) -- (sequence_len - 4) table of batch_size
+        if sentlen > start then
+          local batch_idx = (sent_idx - 1) * opt.bsize
+          local batch_size = math.min(sent_idx * opt.bsize, nsent) - batch_idx
+          local train_input_mb = d[1][{{ batch_idx + 1, batch_idx + batch_size }}] -- batch_size x sequence_len x state_dim tensor
+          local train_output_mb = d[2][{{ batch_idx + 1, batch_idx + batch_size }}]
+            -- batch_size x (sequence_len - 4)
+          train_output_mb = nn.SplitTable(2):forward(train_output_mb) -- (sequence_len - 4) table of batch_size
 
-            criterion:forward(model:forward(train_input_mb), train_output_mb)
-            model:zeroGradParameters()
-            model:backward(train_input_mb, criterion:backward(model.output, train_output_mb))
-            LTgrad:zero()
-            model:updateParameters(opt.learning_rate)
-          end
+          criterion:forward(model:forward(train_input_mb), train_output_mb)
+          model:zeroGradParameters()
+          model:backward(train_input_mb, criterion:backward(model.output, train_output_mb))
+          LTgrad:zero()
+          model:updateParameters(opt.learning_rate)
         end
       end
     end
@@ -174,18 +168,22 @@ function eval(data, model, criterion)
     local sentlen = data.lengths[i]
     local d = data[sentlen]
     local nsent = d[1]:size(1)
+    local start = opt.dwin
     if opt.wide > 0 then
       sentlen = sentlen + 2 * torch.floor(data.dwin/2)
+      start = 0
     end
     for sent_idx = 1, torch.ceil(nsent / opt.bsize) do
-      local batch_idx = (sent_idx - 1) * opt.bsize
-      local batch_size = math.min(sent_idx * opt.bsize, nsent) - batch_idx
-      local test_input_mb = d[1][{{ batch_idx + 1, batch_idx + batch_size }}]
-      local test_output_mb = d[2][{{ batch_idx + 1, batch_idx + batch_size }}]
-      test_output_mb = nn.SplitTable(2):forward(test_output_mb)
+      if sentlen > start then
+        local batch_idx = (sent_idx - 1) * opt.bsize
+        local batch_size = math.min(sent_idx * opt.bsize, nsent) - batch_idx
+        local test_input_mb = d[1][{{ batch_idx + 1, batch_idx + batch_size }}]
+        local test_output_mb = d[2][{{ batch_idx + 1, batch_idx + batch_size }}]
+        test_output_mb = nn.SplitTable(2):forward(test_output_mb)
 
-      nll = nll + criterion:forward(model:forward(test_input_mb), test_output_mb) * batch_size
-      total = total + sentlen * batch_size
+        nll = nll + criterion:forward(model:forward(test_input_mb), test_output_mb) * batch_size
+        total = total + sentlen * batch_size
+      end
     end
     model:forget()
   end
