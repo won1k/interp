@@ -108,7 +108,7 @@ function eval(test_data, model)
 	maxidx = maxidx:squeeze()
 	local accuracy = 0
 	for i = 1, n do
-		if maxidx[i] == test_data.output[i] then
+		if maxidx[i] == test_data.output[i + torch.floor(dwin/2)] then
 			accuracy = accuracy + 1
 		end
 	end
@@ -117,7 +117,7 @@ end
 
 function test(test_data, model, criterion)
 	local test_pred = model:forward(test_data.input)
-	local test_output = test_data.output[{{1, test_pred:size(1)}}]
+	local test_output = test_data.output[{{torch.floor(dwin/2) + 1, torch.floor(dwin/2) + test_pred:size(1)}}]
 	local maxval, maxidx = test_pred:max(2)
 	maxidx = maxidx:squeeze()
 	local output = hdf5.open(opt.testoutfile, 'w')
