@@ -134,10 +134,9 @@ function train(train_data, test_data, model, criterion)
           local batch_idx = (sent_idx - 1) * opt.bsize
           local batch_size = math.min(sent_idx * opt.bsize, nsent) - batch_idx
           local train_input_mb = d[1][{{ batch_idx + 1, batch_idx + batch_size }}] -- batch_size x sequence_len x state_dim tensor
-          local train_output_mb = d[2][{{ batch_idx + 1, batch_idx + batch_size }}]
-          print(model:forward(train_input_mb))
-          print(train_output_mb:size())
-            -- batch_size x (sequence_len - 4)
+          local train_output_mb = d[2][{
+            { batch_idx + 1, batch_idx + batch_size },
+            { torch.floor(opt.dwin/2) + 1, torch.floor(opt.dwin/2) + sentlen }}]
           train_output_mb = nn.SplitTable(2):forward(train_output_mb) -- (sequence_len - 4) table of batch_size
 
           criterion:forward(model:forward(train_input_mb), train_output_mb)
@@ -179,7 +178,9 @@ function eval(data, model, criterion)
         local batch_idx = (sent_idx - 1) * opt.bsize
         local batch_size = math.min(sent_idx * opt.bsize, nsent) - batch_idx
         local test_input_mb = d[1][{{ batch_idx + 1, batch_idx + batch_size }}]
-        local test_output_mb = d[2][{{ batch_idx + 1, batch_idx + batch_size }}]
+        local test_output_mb = d[2][{
+          { batch_idx + 1, batch_idx + batch_size },
+          { torch.floor(opt.dwin/2) + 1, torch.floor(opt.dwin/2) + sentlen }}]
         test_output_mb = nn.SplitTable(2):forward(test_output_mb)
 
         nll = nll + criterion:forward(model:forward(test_input_mb), test_output_mb) * batch_size
@@ -209,7 +210,7 @@ function predict(data, model)
       table.insert(lengths, sentlen)
       local test_input = data[sentlen][1] -- nsent x senquence_len tensor
       local test_output = data[sentlen][2][{{},
-        { 1 + torch.floor(opt.dwin/2), sentlen + torch.floor(opt.dwin/2)}}] -- batch_size x (sequence_len - 4)
+        { torch.floor(opt.dwin/2) + 1, torch.floor(opt.dwin/2) + sentlen }}]
       local test_pred = model:forward(test_input)
       local maxidx = {}
       for j = 1, #test_pred do
