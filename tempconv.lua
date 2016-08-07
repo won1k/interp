@@ -65,15 +65,15 @@ function train(train_data, test_data, model, criterion)
   params:uniform(-opt.param_init, opt.param_init)
 
 	-- Train model
-	for t = 1, epochs do
+	for t = 1, opt.epochs do
 		print("Training epoch: " .. t)
-		for idx = 1, torch.floor(n / bsize) do
+		for idx = 1, torch.floor(n / opt.bsize) do
 			-- Create minibatches
-			local start_idx = (idx-1) * bsize
-			local mb_size = math.min(idx * bsize, n) - start_idx
+			local start_idx = (idx-1) * opt.bsize
+			local mb_size = math.min(idx * opt.bsize, n) - start_idx
 			local train_input_mb = train_data.input[{{ start_idx + 1, start_idx + mb_size }}] -- to make sure enough space for convolution
 			local train_output_mb = train_data.output[{
-				{ start_idx + torch.floor(dwin/2) + 1, start_idx + mb_size -torch.floor(dwin/2) }}]
+				{ start_idx + torch.floor(opt.dwin/2) + 1, start_idx + mb_size -torch.floor(opt.dwin/2) }}]
 
 			-- Manual SGD
 			criterion:forward(model:forward(train_input_mb), train_output_mb)
@@ -84,7 +84,7 @@ function train(train_data, test_data, model, criterion)
 
 		print("Testing...")
 		-- Validation
-		local score = eval(test_windowed, test_output_windowed, model)
+		local score = eval(test_data, model)
 		print("Validation accuracy", val_acc)
 
 		if score > last_score - .3 then
@@ -124,7 +124,7 @@ function test(test_data, model, criterion)
 	output:write('predictions', test_pred:float())
 	output:write('output', maxidx:long())
 	output:write('tags', test_output:float())
-	output:write('dwin', torch.Tensor{dwin}:long())
+	output:write('dwin', torch.Tensor{opt.dwin}:long())
 	output:close()
 end
 
