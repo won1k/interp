@@ -122,16 +122,15 @@ function train(train_data, test_data, model, criterion)
     -- Assuming data is in format data[sentlen] = { nsent x sentlen x state_dim tensor, nsent x sentlen tensor }
     for i = 1, train_data.nlengths do
       local sentlen = train_data.lengths[i]
-      print(sentlen)
+      local paddedlen = sentlen
       local d = train_data[sentlen]
       local nsent = d[1]:size(1)
-      local start = opt.dwin
       if opt.wide > 0 then
-        sentlen = sentlen + 2 * torch.floor(opt.dwin/2)
-        start = 0
+        paddedlen = sentlen + 2 * torch.floor(opt.dwin/2)
       end
       for sent_idx = 1, torch.ceil(nsent / opt.bsize) do
-        if sentlen > start then
+        if paddedlen > opt.dwin then
+          print(sentlen)
           local batch_idx = (sent_idx - 1) * opt.bsize
           local batch_size = math.min(sent_idx * opt.bsize, nsent) - batch_idx
           local train_input_mb = d[1][{{ batch_idx + 1, batch_idx + batch_size }}] -- batch_size x sequence_len x state_dim tensor
@@ -208,7 +207,7 @@ function predict(data, model)
       table.insert(lengths, sentlen)
       local test_input = data[sentlen][1] -- nsent x senquence_len tensor
       local test_output = data[sentlen][2][{{},
-        { 1 + torch.floor(data.dwin/2), sentlen + torch.floor(data.dwin/2)}}] -- batch_size x (sequence_len - 4)
+        { 1 + torch.floor(opt.dwin/2), sentlen + torch.floor(opt.dwin/2)}}] -- batch_size x (sequence_len - 4)
       local test_pred = model:forward(test_input)
       local maxidx = {}
       for j = 1, #test_pred do
