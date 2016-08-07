@@ -60,7 +60,7 @@ end
 
 function train(train_data, test_data, model, criterion)
 	local last_score = 1e9
-	local n = train_input:size()[1]
+	local n = train_data.input:size(1)
 	local params, gradParams = model:getParameters()
   params:uniform(-opt.param_init, opt.param_init)
 
