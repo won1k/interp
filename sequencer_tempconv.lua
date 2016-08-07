@@ -21,6 +21,7 @@ cmd:option('-epochs', 30, 'epochs')
 cmd:option('-bsize', 32, 'mini-batch size')
 cmd:option('-seqlen', 20, 'seq-len size')
 cmd:option('-dhid', 300, 'hidden dimension')
+cmd:option('-dwin', 5, 'window dimension')
 cmd:option('-param_init', 0.05, 'initial parameter values')
 
 local data = torch.class('data')
@@ -38,7 +39,6 @@ function data:__init(data_file, tag_file)
      self.nclasses = g:read('nclasses_pos'):all():long()[1]
    end
    self.state_dim = f:read('state_dim'):all():long()[1]
-   self.dwin = g:read('dwin'):all():long()[1]
    -- Load sequencer data from total x 650 state file
    local curr_idx = 1
    local states = f:read('states2'):all()
