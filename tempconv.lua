@@ -72,9 +72,8 @@ function train(train_data, test_data, model, criterion)
 			local start_idx = (idx-1) * bsize
 			local mb_size = math.min(idx * bsize, n) - start_idx
 			local train_input_mb = train_data.input[{{ start_idx + 1, start_idx + mb_size }}] -- to make sure enough space for convolution
-			local train_output_mb = train_data.output[{{ start_idx + 1, start_idx + mb_size }}]
-			train_input_mb = temp:forward(train_input_mb):clone()
-			train_output_mb = train_output_mb[{{ torch.floor(dwin/2) + 1, mb_size - torch.floor(dwin/2) }}]
+			local train_output_mb = train_data.output[{
+				{ start_idx + torch.floor(dwin/2) + 1, start_idx + mb_size -torch.floor(dwin/2) }}]
 
 			-- Manual SGD
 			criterion:forward(model:forward(train_input_mb), train_output_mb)
