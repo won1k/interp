@@ -52,7 +52,7 @@ function data:__init(data_file, tag_file)
        self.output[len] = g:read(tostring(len) .. "_pos"):all():double()
      end
      if opt.wide > 0 then
-       pad_len = len + 2 * torch.floor(self.dwin/2)
+       pad_len = len + 2 * torch.floor(opt.dwin/2)
      end
      self.input[len] = torch.Tensor(nsent, pad_len, self.state_dim)
      for j = 1, nsent do
