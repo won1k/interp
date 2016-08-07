@@ -95,7 +95,7 @@ function train(train_data, test_data, model, criterion)
 	end
 
 	-- Save model
-	local savefile = string.format('%s_epoch%.2f_%.2f.t7', opt.savefile, t, last_score)
+	local savefile = string.format('%s_%.2f.t7', opt.savefile, last_score)
 	torch.save(savefile, model)
 
 	return model
