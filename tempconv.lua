@@ -32,8 +32,8 @@ function data:__init(data_file, tag_file)
 	 self.length = self.input:size(1)
 	 self.state_dim = self.input:size(2)
 	 if opt.gpu > 0 then
-		 self.input:cuda()
-		 self.output:cuda()
+		 self.input = self.input:cuda()
+		 self.output = self.output:cuda()
 	 end
    f:close()
 	 g:close()
