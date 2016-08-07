@@ -15,12 +15,12 @@ cmd:option('-testoutfile', 'test_results.hdf5', 'output file for test')
 cmd:option('-gpu', 0, 'whether to use gpu')
 
 -- Hyperparameters
-cmd:option('-state_dim', 650, 'LSTM state dimension')
 cmd:option('-lambda', 1, 'learning rate')
 cmd:option('-epochs', 30, 'epochs')
 cmd:option('-bsize', 32, 'mini-batch size')
 cmd:option('-dhid', 300, 'hidden dimension')
 cmd:option('-dwin', 5, 'window size')
+cmd:option('-param_init', 0.05, 'parameter initialization')
 
 local data = torch.class('data')
 function data:__init(data_file, tag_file)
