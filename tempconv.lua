@@ -15,7 +15,7 @@ cmd:option('-testoutfile', 'test_results.hdf5', 'output file for test')
 cmd:option('-gpu', 0, 'whether to use gpu')
 
 -- Hyperparameters
-cmd:option('-lambda', 1, 'learning rate')
+cmd:option('-learning_rate', 1, 'learning rate')
 cmd:option('-epochs', 30, 'epochs')
 cmd:option('-bsize', 32, 'mini-batch size')
 cmd:option('-dhid', 300, 'hidden dimension')
@@ -79,7 +79,7 @@ function train(train_data, test_data, model, criterion)
 			criterion:forward(model:forward(train_input_mb), train_output_mb)
 			model:zeroGradParameters()
 			model:backward(train_input_mb, criterion:backward(model.output, train_output_mb))
-			model:updateParameters(lambda)
+			model:updateParameters(opt.learning_rate)
 		end
 
 		print("Testing...")
