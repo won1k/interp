@@ -59,7 +59,7 @@ function make_model(data)
 end
 
 function train(train_data, test_data, model, criterion)
-	local last_score = 1e9
+	local last_score = 0
 	local n = train_data.input:size(1)
 	local params, gradParams = model:getParameters()
   params:uniform(-opt.param_init, opt.param_init)
