@@ -124,7 +124,6 @@ function train(train_data, test_data, model, criterion)
             { batch_idx + 1, batch_idx + batch_size },
             { torch.floor(opt.dwin/2) + 1, torch.floor(opt.dwin/2) + sentlen}}]
           train_output_mb = nn.SplitTable(2):forward(train_output_mb)
-          print(model:forward(train_input_mb), train_output_mb)
 
           criterion:forward(model:forward(train_input_mb), train_output_mb)
           model:zeroGradParameters()
