@@ -222,7 +222,7 @@ function predict(data, model)
       total = total + test_output:long():ge(0):sum()
     end
   end
-  --output:write('dwin', torch.Tensor{opt.dwin}:long())
+  output:write('dwin', torch.Tensor{opt.dwin}:long())
   output:write('sent_lens', torch.Tensor(lengths):long())
   accuracy = accuracy / total
   output:write('accuracy', torch.Tensor{accuracy}:double())
