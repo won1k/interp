@@ -116,7 +116,6 @@ function train(train_data, test_data, model, criterion)
         print(sentlen)
         local d = train_data[sentlen]
         local nsent = d[1]:size(1)
-        print(d[1]:size(), d[2]:size())
         for sent_idx = 1, torch.ceil(nsent / opt.bsize) do
           local batch_idx = (sent_idx - 1) * opt.bsize
           local batch_size = math.min(sent_idx * opt.bsize, nsent) - batch_idx
@@ -125,6 +124,7 @@ function train(train_data, test_data, model, criterion)
             { batch_idx + 1, batch_idx + batch_size },
             { torch.floor(opt.dwin/2) + 1, torch.floor(opt.dwin/2) + sentlen}}]
           train_output_mb = nn.SplitTable(2):forward(train_output_mb)
+          print(model:forward(train_input_mb), train_output_mb)
 
           criterion:forward(model:forward(train_input_mb), train_output_mb)
           model:zeroGradParameters()
