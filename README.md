@@ -33,7 +33,7 @@
 2) sequencer_model.lua
 3) sequencer_get_states.lua
 4) sequencer_tempconv.lua
-5) sequencer_postpro.py sequencer_test.txt convert_seq/train_parsed_chunks.dict sequencer_test_results.hdf5 sequencer_test_conll.txt
+5) sequencer_postpro.py sequencer_test.txt convert_seq/train_parsed_chunks.dict sequencer_test_results.hdf5 sequencer_test_conll.txt 1
 6) ./conlleval.pl < sequencer_test_conll.txt
 
 # Pipeline (Sequencer, Word)
