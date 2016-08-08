@@ -157,6 +157,7 @@ function train(train_data, test_data, model, criterion)
        opt.learning_rate = opt.learning_rate / 2
     end
     last_score = score
+    print(t, score, opt.learning_rate)
   end
 end
 
@@ -189,7 +190,6 @@ function eval(data, model, criterion)
     model:forget()
   end
   local valid = math.exp(nll / total)
-  print('Validation error', valid)
   return valid
 end
 
@@ -222,7 +222,7 @@ function predict(data, model)
       total = total + test_output:long():ge(0):sum()
     end
   end
-  output:write('dwin', torch.Tensor{data.dwin}:long())
+  output:write('dwin', torch.Tensor{opt.dwin}:long())
   output:write('sent_lens', torch.Tensor(lengths):long())
   accuracy = accuracy / total
   output:write('accuracy', torch.Tensor{accuracy}:double())

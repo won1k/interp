@@ -109,14 +109,14 @@ function train(train_data, test_data, model, criterion)
     for i = 1, train_data.nlengths do
       local sentlen = train_data.lengths[i]
       local paddedlen = sentlen
-      local d = train_data[sentlen]
-      local nsent = d[1]:size(1)
       if opt.wide > 0 then
         paddedlen = sentlen + 2 * torch.floor(opt.dwin/2)
       end
-      for sent_idx = 1, torch.ceil(nsent / opt.bsize) do
-        if paddedlen > opt.dwin then
-          print(sentlen)
+      if paddedlen >= opt.dwin then
+        print(sentlen)
+        local d = train_data[sentlen]
+        local nsent = d[1]:size(1)
+        for sent_idx = 1, torch.ceil(nsent / opt.bsize) do
           local batch_idx = (sent_idx - 1) * opt.bsize
           local batch_size = math.min(sent_idx * opt.bsize, nsent) - batch_idx
           local train_input_mb = d[1][{{ batch_idx + 1, batch_idx + batch_size }}]
@@ -143,6 +143,8 @@ function train(train_data, test_data, model, criterion)
        opt.learning_rate = opt.learning_rate / 2
     end
     last_score = score
+
+    print(t, score, opt.learning_rate)
   end
 end
 
@@ -153,13 +155,13 @@ function eval(data, model, criterion)
   for i = 1, data.nlengths do
     local sentlen = data.lengths[i]
     local paddedlen = sentlen
-    local d = data[sentlen]
-    local nsent = d[1]:size(1)
     if opt.wide > 0 then
       paddedlen = sentlen + 2 * torch.floor(data.dwin/2)
     end
-    for sent_idx = 1, torch.ceil(nsent / opt.bsize) do
-      if paddedlen > opt.dwin then
+    if paddedlen > opt.dwin then
+      local d = data[sentlen]
+      local nsent = d[1]:size(1)
+      for sent_idx = 1, torch.ceil(nsent / opt.bsize) do
         local batch_idx = (sent_idx - 1) * opt.bsize
         local batch_size = math.min(sent_idx * opt.bsize, nsent) - batch_idx
         local test_input_mb = d[1][{{ batch_idx + 1, batch_idx + batch_size }}]
@@ -174,9 +176,7 @@ function eval(data, model, criterion)
     end
     model:forget()
   end
-  local valid = math.exp(nll / total)
-  print('Validation error', valid)
-  return valid
+  return math.exp(nll / total)
 end
 
 function predict(data, model)
@@ -191,9 +191,9 @@ function predict(data, model)
     if opt.wide > 0 then
       paddedlen = sentlen + 2 * torch.floor(data.dwin/2)
     end
-    local d = data[sentlen]
-    local nsent = d[1]:size(1)
     if paddedlen > opt.dwin then
+      local d = data[sentlen]
+      local nsent = d[1]:size(1)
       table.insert(nlengths, sentlen)
       local test_input = d[1] -- nsent x sentlen tensor
       local test_output = d[2][{{},
