@@ -150,8 +150,10 @@ function train(train_data, test_data, model, criterion)
     -- Validation error at epoch
     local score = eval(test_data, model, criterion)
     local savefile = string.format('%s_epoch%.2f_%.2f.t7', opt.savefile, t, score)
-    torch.save(savefile, model)
-    print('saving checkpoint to ' .. savefile)
+    if t > 0.75*epochs then
+      torch.save(savefile, model)
+      print('saving checkpoint to ' .. savefile)
+    end
 
     if score > last_score - .01 then
        opt.learning_rate = opt.learning_rate / 2
