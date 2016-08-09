@@ -9,10 +9,11 @@ cmd:option('-datafile', 'convert_seq/data_pad.hdf5', 'data file')
 cmd:option('-testfile', 'convert_seq/data_pad_test.hdf5', 'raw words for test')
 cmd:option('-savefile', 'checkpoint_seq/word_pad', 'output file for checkpoints')
 cmd:option('-testoutfile', 'seq_pad_results_word.hdf5', 'output file for test')
-cmd:option('-ltweights', 'embeddings/lstm_LT.h5', 'file containing LT weights')
+cmd:option('-ltweights', 'embeddings/lstm_LT.h5', 'file containing LT weights/embeddings')
 cmd:option('-gpu', 0, 'whether to use gpu')
 cmd:option('-wide', 1, '1 if wide convolution')
 cmd:option('-task', 'chunks', 'chunks or pos')
+cmd:option('-wtlearn', 0, 'whether to learn embeddings (1)')
 
 -- Hyperparameters
 cmd:option('-learning_rate', 1, 'learning rate')
@@ -128,7 +129,9 @@ function train(train_data, test_data, model, criterion)
           criterion:forward(model:forward(train_input_mb), train_output_mb)
           model:zeroGradParameters()
           model:backward(train_input_mb, criterion:backward(model.output, train_output_mb))
-          LTgrad:zero()
+          if opt.wtlearn == 0 then
+            LTgrad:zero()
+          end
           model:updateParameters(opt.learning_rate)
         end
       end
