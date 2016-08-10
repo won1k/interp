@@ -68,7 +68,6 @@ end
 function make_model(train_data, lt_weights) -- batch_size x sentlen tensor input
   local model = nn.Sequential()
   local LT = nn.LookupTable(lt_weights:size(1), lt_weights:size(2))
-  LT.weight = lt_weights
   model:add(LT) -- batch_size x sentlen x state_dim
   local temp = nn.Sequential()
   temp:add(nn.SplitTable(1)) -- batch_size table of sentlen x state_dim
@@ -97,12 +96,15 @@ function make_model(train_data, lt_weights) -- batch_size x sentlen tensor input
   return model, criterion
 end
 
-function train(train_data, test_data, model, criterion)
+function train(train_data, test_data, model, criterion, lt_weights)
   local last_score = 1e9
   local params, gradParams = model:getParameters()
   params:uniform(-opt.param_init, opt.param_init)
   -- Get params to prevent LT weights update
   local LTweights, LTgrad = model:get(1):getParameters()
+  if opt.wtlearn == 0 then
+    LTweights = lt_weights
+  end
   for t = 1, opt.epochs do
     model:training()
     print("Training epoch: " .. t)
@@ -139,7 +141,7 @@ function train(train_data, test_data, model, criterion)
     -- Validation error at epoch
     local score = eval(test_data, model, criterion)
     local savefile = string.format('%s_epoch%.2f_%.2f.t7', opt.savefile, t, score)
-    if t > 0.75*opt.epochs then
+    if t == opt.epochs then
       torch.save(savefile, model)
       print('saving checkpoint to ' .. savefile)
     end
