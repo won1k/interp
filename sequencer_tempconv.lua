@@ -114,8 +114,6 @@ function train(train_data, test_data, model, criterion)
   local last_score = 1e9
   local params, gradParams = model:getParameters()
   params:uniform(-opt.param_init, opt.param_init)
-  -- Get params to prevent LT weights update
-  local LTweights, LTgrad = model:get(1):getParameters()
   for t = 1, opt.epochs do
     model:training()
     print("Training epoch: " .. t)
@@ -142,7 +140,6 @@ function train(train_data, test_data, model, criterion)
           criterion:forward(model:forward(train_input_mb), train_output_mb)
           model:zeroGradParameters()
           model:backward(train_input_mb, criterion:backward(model.output, train_output_mb))
-          LTgrad:zero()
           model:updateParameters(opt.learning_rate)
         end
       end
