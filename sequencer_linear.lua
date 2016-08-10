@@ -86,6 +86,7 @@ function make_model(train_data) -- batch_size x sentlen x state_dim tensor input
   lin_seq:add(nn.Reshape(opt.dhid, 1, true)) -- batch_size table of sentlen x hid_dim x 1
   lin:add(nn.Sequencer(lin_seq))
   lin:add(nn.JoinTable(3)) -- sentlen x hid_dim x batch_size
+  model:add(lin)
   model:add(nn.Transpose({2,3})) -- sentlen x batch_size x hid_dim
   model:add(nn.SplitTable(1)) -- (sent_len - 4) table of batch_size x hid_dim
   local seq = nn.Sequential()
