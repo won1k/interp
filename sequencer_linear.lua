@@ -122,10 +122,10 @@ function train(train_data, test_data, model, criterion)
         local batch_idx = (sent_idx - 1) * opt.bsize
         local batch_size = math.min(sent_idx * opt.bsize, nsent) - batch_idx
         local train_input_mb = d[1][{{ batch_idx + 1, batch_idx + batch_size }}] -- batch_size x sequence_len x state_dim tensor
-        local train_output_mb = d[2][{
-          { batch_idx + 1, batch_idx + batch_size }}]
+        local train_output_mb = d[2][{{ batch_idx + 1, batch_idx + batch_size }}]
         train_output_mb = nn.SplitTable(2):forward(train_output_mb) -- (sequence_len - 4) table of batch_size
-        print(model:forward(train_output_mb), train_output_mb)
+        print(model:forward(train_output_mb))
+        print(train_output_mb)
 
         criterion:forward(model:forward(train_input_mb), train_output_mb)
         model:zeroGradParameters()
