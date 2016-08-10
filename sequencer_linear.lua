@@ -193,6 +193,7 @@ function predict(data, model)
     output:write(tostring(sentlen), maxidx:long())
     output:write(tostring(sentlen) .. '_target', test_output:long())
     accuracy = accuracy + torch.eq(maxidx:long(), test_output:long()):sum()
+    total = total + test_output:long():ge(0):sum()
   end
   output:write('dwin', torch.Tensor{opt.dwin}:long())
   output:write('sent_lens', torch.Tensor(lengths):long())
