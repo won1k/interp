@@ -168,14 +168,14 @@ function eval(data, model, criterion)
   local total = 0
   for i = 1, data.nlengths do
     local sentlen = data.lengths[i]
+    local paddedlen = sentlen
+    if opt.wide > 0 then
+      paddedlen = sentlen + 2*torch.floor(opt.dwin)
+    end
     local d = data[sentlen]
     local nsent = d[1]:size(1)
-    local start = opt.dwin
-    if opt.wide > 0 then
-      start = 0
-    end
     for sent_idx = 1, torch.ceil(nsent / opt.bsize) do
-      if sentlen > start then
+      if paddedlen > opt.dwin then
         local batch_idx = (sent_idx - 1) * opt.bsize
         local batch_size = math.min(sent_idx * opt.bsize, nsent) - batch_idx
         local test_input_mb = d[1][{
@@ -205,7 +205,7 @@ function predict(data, model)
   for i = 1, data.nlengths do
     local sentlen = data.lengths[i]
     if opt.wide > 0 then
-      paddedlen = sentlen + 2*torch.floor(dwin/2)
+      paddedlen = sentlen + 2*torch.floor(opt.dwin/2)
     end
     if paddedlen > opt.dwin then
       table.insert(lengths, sentlen)
