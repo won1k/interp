@@ -170,7 +170,7 @@ function eval(data, model, criterion)
     local sentlen = data.lengths[i]
     local paddedlen = sentlen
     if opt.wide > 0 then
-      paddedlen = sentlen + 2*torch.floor(opt.dwin)
+      paddedlen = sentlen + 2 * torch.floor(opt.dwin/2)
     end
     local d = data[sentlen]
     local nsent = d[1]:size(1)
