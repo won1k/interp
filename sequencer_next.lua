@@ -124,7 +124,7 @@ function train(train_data, test_data, model, criterion)
       if opt.wide > 0 then
         paddedlen = sentlen + 2 * torch.floor(opt.dwin/2)
       end
-      if paddedlen >= opt.dwin then
+      if paddedlen > opt.dwin then
         print(sentlen)
         local d = train_data[sentlen]
         local nsent = d[1]:size(1)
