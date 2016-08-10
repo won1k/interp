@@ -159,6 +159,9 @@ function train(train_data, test_data, model, criterion)
     end
     last_score = score
     print(t, score, opt.learning_rate)
+    if score < 1e-5 then
+      break
+    end
   end
 end
 
