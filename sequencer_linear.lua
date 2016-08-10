@@ -5,18 +5,18 @@ require 'rnn';
 cmd = torch.CmdLine()
 
 -- Cmd Args
-cmd:option('-datafile', 'checkpoint_seq/lstm_states_pad.h5', 'data file')
-cmd:option('-tagfile', 'convert_seq/data_pad.hdf5', 'tag file for training')
-cmd:option('-testfile', 'checkpoint_seq/lstm_states_pad_test.h5', 'raw words for test')
-cmd:option('-testtagfile', 'convert_seq/data_pad_test.hdf5', 'tag file for test')
-cmd:option('-savefile', 'checkpoint_seq/tempconv', 'output file for checkpoints')
-cmd:option('-testoutfile', 'seq_test_results.hdf5', 'output file for test')
+cmd:option('-datafile', 'checkpoint_seq/lstm_states.h5', 'data file')
+cmd:option('-tagfile', 'convert_seq/data.hdf5', 'tag file for training')
+cmd:option('-testfile', 'checkpoint_seq/lstm_states_test.h5', 'raw words for test')
+cmd:option('-testtagfile', 'convert_seq/data_test.hdf5', 'tag file for test')
+cmd:option('-savefile', 'checkpoint_seq/linear', 'output file for checkpoints')
+cmd:option('-testoutfile', 'seq_lin_results.hdf5', 'output file for test')
 cmd:option('-gpu', 0, 'whether to use gpu')
 cmd:option('-wide', 1, '1 if wide convolution (padded), 0 otherwise')
 cmd:option('-task', 'chunks', 'chunks or pos')
 
 -- Hyperparameters
-cmd:option('-learning_rate', 1, 'learning rate')
+cmd:option('-learning_rate', 0.01, 'learning rate')
 cmd:option('-epochs', 30, 'epochs')
 cmd:option('-bsize', 32, 'mini-batch size')
 cmd:option('-seqlen', 20, 'seq-len size')
@@ -132,8 +132,7 @@ function train(train_data, test_data, model, criterion)
           local batch_size = math.min(sent_idx * opt.bsize, nsent) - batch_idx
           local train_input_mb = d[1][{{ batch_idx + 1, batch_idx + batch_size }}] -- batch_size x sequence_len x state_dim tensor
           local train_output_mb = d[2][{
-            { batch_idx + 1, batch_idx + batch_size },
-            { torch.floor(opt.dwin/2) + 1, torch.floor(opt.dwin/2) + sentlen }}]
+            { batch_idx + 1, batch_idx + batch_size }}]
           train_output_mb = nn.SplitTable(2):forward(train_output_mb) -- (sequence_len - 4) table of batch_size
 
           criterion:forward(model:forward(train_input_mb), train_output_mb)
@@ -177,8 +176,7 @@ function eval(data, model, criterion)
         local batch_size = math.min(sent_idx * opt.bsize, nsent) - batch_idx
         local test_input_mb = d[1][{{ batch_idx + 1, batch_idx + batch_size }}]
         local test_output_mb = d[2][{
-          { batch_idx + 1, batch_idx + batch_size },
-          { torch.floor(opt.dwin/2) + 1, torch.floor(opt.dwin/2) + sentlen }}]
+          { batch_idx + 1, batch_idx + batch_size }}]
         test_output_mb = nn.SplitTable(2):forward(test_output_mb)
 
         nll = nll + criterion:forward(model:forward(test_input_mb), test_output_mb) * batch_size
@@ -206,8 +204,7 @@ function predict(data, model)
     if sentlen > start then
       table.insert(lengths, sentlen)
       local test_input = data[sentlen][1] -- nsent x senquence_len tensor
-      local test_output = data[sentlen][2][{{},
-        { torch.floor(opt.dwin/2) + 1, torch.floor(opt.dwin/2) + sentlen }}]
+      local test_output = data[sentlen][2]
       local test_pred = model:forward(test_input)
       local maxidx = {}
       for j = 1, #test_pred do

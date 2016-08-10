@@ -16,7 +16,7 @@ cmd:option('-task', 'chunks', 'chunks or pos')
 cmd:option('-wtlearn', 0, 'whether to learn embeddings (1)')
 
 -- Hyperparameters
-cmd:option('-learning_rate', 1, 'learning rate')
+cmd:option('-learning_rate', 0.01, 'learning rate')
 cmd:option('-epochs', 30, 'epochs')
 cmd:option('-bsize', 32, 'mini-batch size')
 cmd:option('-seqlen', 20, 'seq-len size')

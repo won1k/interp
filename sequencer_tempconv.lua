@@ -16,7 +16,7 @@ cmd:option('-wide', 1, '1 if wide convolution (padded), 0 otherwise')
 cmd:option('-task', 'chunks', 'chunks or pos')
 
 -- Hyperparameters
-cmd:option('-learning_rate', 1, 'learning rate')
+cmd:option('-learning_rate', 0.01, 'learning rate')
 cmd:option('-epochs', 30, 'epochs')
 cmd:option('-bsize', 32, 'mini-batch size')
 cmd:option('-seqlen', 20, 'seq-len size')
