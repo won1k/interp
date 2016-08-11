@@ -23,6 +23,7 @@ cmd:option('-seqlen', 20, 'seq-len size')
 cmd:option('-dhid', 300, 'hidden dimension')
 cmd:option('-dwin', 5, 'window dimension')
 cmd:option('-param_init', 0.05, 'initial parameter values')
+cmd:option('-dropout_prob', 0.5, 'probability of dropout')
 
 local data = torch.class('data')
 function data:__init(data_file, tag_file)
@@ -95,6 +96,7 @@ function make_model(train_data) -- batch_size x sentlen x state_dim tensor input
   model:add(nn.SplitTable(1)) -- (sent_len - 4) table of batch_size x hid_dim
   local seq = nn.Sequential()
   seq:add(nn.HardTanh())
+  seq:add(nn.Dropout(opt.dropout_prob))
   seq:add(nn.Linear(opt.dhid, train_data.nclasses))
   seq:add(nn.LogSoftMax())
   model:add(nn.Sequencer(seq))
