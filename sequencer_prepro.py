@@ -86,6 +86,15 @@ def get_data(args):
                     pos = idx_to_pos[pos_seq[sent_idx][word_idx]]
                     print >>out, word, pos, chunk
                 print >>out, ""
+        out.close()
+
+    def text_output(datafile, sentences):
+        out = open("sentences_" + datafile, "w")
+        idx_to_word = dict([(v, k) for k, v in target_indexer.d.iteritems()])
+        for length, sent_list in sentences.iteritems():
+            for sentence in sent_list:
+                print >>out, ' '.join([idx_to_word[word] for word in sentence])
+        out.close()
 
     def add_padding(sentences, pos_seqs, chunk_seqs, sent_lens, dwin):
         for length in sent_lens:
@@ -130,6 +139,7 @@ def get_data(args):
 
         # Reoutput raw data ordered by length
         sequencer_template(datafile, sentences, pos_seqs, chunk_seqs)
+        text_output(datafile, sentences)
 
         # Add padding for windowed models
         sentences, pos_seqs, chunk_seqs = add_padding(sentences, pos_seqs, chunk_seqs, sent_lens, dwin)

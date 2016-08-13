@@ -24,7 +24,7 @@ cmd:option('-dhid', 300, 'hidden dimension')
 cmd:option('-dwin', 5, 'window size')
 cmd:option('-param_init', 0.05, 'initial parameter values')
 cmd:option('-fan_in', 1, 'use fan-in-based separate learning rates')
-cmd:option('dropout_prob', 0.5, 'dropout probability')
+cmd:option('-dropout_prob', 0.5, 'dropout probability')
 
 local data = torch.class('data')
 function data:__init(data_file)
