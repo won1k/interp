@@ -21,7 +21,7 @@ function make_lstm(data, opt, model, use_chars)
       input_size = opt.word_vec_size
    else
       input_size = opt.num_kernels
-   end
+   end   
    local offset = 0
   -- there will be 2*n+3 inputs
    local inputs = {}
@@ -30,8 +30,8 @@ function make_lstm(data, opt, model, use_chars)
       table.insert(inputs, nn.Identity()()) -- all context (batch_size x source_l x rnn_size)
       offset = offset + 1
       if opt.input_feed == 1 then
-	      table.insert(inputs, nn.Identity()()) -- prev context_attn (batch_size x rnn_size)
-	      offset = offset + 1
+	 table.insert(inputs, nn.Identity()()) -- prev context_attn (batch_size x rnn_size)
+	 offset = offset + 1
       end
    end
    for L = 1,n do
@@ -43,7 +43,7 @@ function make_lstm(data, opt, model, use_chars)
    local outputs = {}
   for L = 1,n do
      -- c,h from previous timesteps
-    local prev_c = inputs[L*2+offset]
+    local prev_c = inputs[L*2+offset]    
     local prev_h = inputs[L*2+1+offset]
     -- the input to this layer
     if L == 1 then
@@ -53,7 +53,7 @@ function make_lstm(data, opt, model, use_chars)
 	     word_vecs = nn.LookupTable(data.source_size, input_size)
 	  else
 	     word_vecs = nn.LookupTable(data.target_size, input_size)
-	  end
+	  end	  
 	  word_vecs.name = 'word_vecs' .. name
 	  x = word_vecs(inputs[1]) -- batch_size x word_vec_size
        else
@@ -66,20 +66,20 @@ function make_lstm(data, opt, model, use_chars)
 	     local mlp = make_highway(input_size, opt.num_highway_layers)
 	     mlp.name = 'mlp' .. name
 	     x = mlp(x)
-	  end
+	  end	  
        end
        input_size_L = input_size
        if model == 'dec' then
 	  if opt.input_feed == 1 then
 	     x = nn.JoinTable(2)({x, inputs[1+offset]}) -- batch_size x (word_vec_size + rnn_size)
 	     input_size_L = input_size + rnn_size
-	  end
+	  end	  
        end
     else
        x = outputs[(L-1)*2]
        if opt.res_net == 1 and L > 2 then
-	  x = nn.CAddTable()({x, outputs[(L-2)*2]})
-       end
+	  x = nn.CAddTable()({x, outputs[(L-2)*2]})       
+       end       
        input_size_L = rnn_size
        if opt.multi_attn == L and model == 'dec' then
 	  local multi_attn = make_decoder_attn(data, opt, 1)
@@ -88,7 +88,7 @@ function make_lstm(data, opt, model, use_chars)
        end
        if dropout > 0 then
 	  x = nn.Dropout(dropout, nil, false)(x)
-       end
+       end       
     end
     -- evaluate the input sums at once for efficiency
     local i2h = nn.Linear(input_size_L, 4 * rnn_size):reuseMem()(x)
@@ -110,7 +110,7 @@ function make_lstm(data, opt, model, use_chars)
       })
     -- gated cells form the output
     local next_h = nn.CMulTable()({out_gate, nn.Tanh():reuseMem()(next_c)})
-
+    
     table.insert(outputs, next_c)
     table.insert(outputs, next_h)
   end
@@ -127,7 +127,7 @@ function make_lstm(data, opt, model, use_chars)
      end
      if dropout > 0 then
 	decoder_out = nn.Dropout(dropout, nil, false)(decoder_out)
-     end
+     end     
      table.insert(outputs, decoder_out)
   end
   return nn.gModule(inputs, outputs)
@@ -151,7 +151,7 @@ function make_decoder_attn(data, opt, simple)
    softmax_attn.name = 'softmax_attn'
    attn = softmax_attn(attn)
    attn = nn.Replicate(1,2)(attn) -- batch_l x  1 x source_l
-
+   
    -- apply attention to context
    local context_combined = nn.MM()({attn, context}) -- batch_l x 1 x rnn_size
    context_combined = nn.Sum(2)(context_combined) -- batch_l x rnn_size
@@ -162,8 +162,8 @@ function make_decoder_attn(data, opt, simple)
 						 opt.rnn_size)(context_combined))
    else
       context_output = nn.CAddTable()({context_combined,inputs[1]})
-   end
-   return nn.gModule(inputs, {context_output})
+   end   
+   return nn.gModule(inputs, {context_output})   
 end
 
 function make_generator(data, opt)
@@ -181,7 +181,7 @@ end
 -- cnn Unit
 function make_cnn(input_size, kernel_width, num_kernels)
    local output
-   local input = nn.Identity()()
+   local input = nn.Identity()() 
    if opt.cudnn == 1 then
       local conv = cudnn.SpatialConvolution(1, num_kernels, input_size,
 					    kernel_width, 1, 1, 0)
@@ -200,7 +200,7 @@ function make_highway(input_size, num_layers, output_size, bias, f)
     -- num_layers = number of hidden layers (default = 1)
     -- bias = bias for transform gate (default = -2)
     -- f = non-linearity (default = ReLU)
-
+    
     local num_layers = num_layers or 1
     local input_size = input_size
     local output_size = output_size or input_size
@@ -213,7 +213,7 @@ function make_highway(input_size, num_layers, output_size, bias, f)
 	  input_size = output_size
        else
 	  input = start
-       end
+       end       
        output = f(nn.Linear(input_size, output_size)(input))
        transform_gate = nn.Sigmoid()(nn.AddConstant(bias, true)(
 					nn.Linear(input_size, output_size)(input)))
@@ -230,3 +230,4 @@ function make_highway(input_size, num_layers, output_size, bias, f)
     end
     return nn.gModule({start},{input})
 end
+
