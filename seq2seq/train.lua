@@ -384,7 +384,7 @@ function train(train_data, valid_data)
 	    rnn_state_enc[t] = out
 	    context[{{},t}]:copy(out[#out])
 	 end
-   --print(rnn_state_enc)
+   print(rnn_state_enc)
 
 	 local rnn_state_enc_bwd
 	 if opt.brnn == 1  then
