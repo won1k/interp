@@ -362,6 +362,7 @@ function train(train_data, valid_data)
 	    d = data[batch_order[i]]
 	 end
    print(d)
+   print(d[8])
          local target, target_out, nonzeros, source = d[1], d[2], d[3], d[4]
 	 local batch_l, target_l, source_l = d[5], d[6], d[7]
 
@@ -383,7 +384,7 @@ function train(train_data, valid_data)
 	    rnn_state_enc[t] = out
 	    context[{{},t}]:copy(out[#out])
 	 end
-   print(rnn_state_enc)
+   --print(rnn_state_enc)
 
 	 local rnn_state_enc_bwd
 	 if opt.brnn == 1  then
