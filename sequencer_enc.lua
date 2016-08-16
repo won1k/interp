@@ -121,7 +121,7 @@ function train(data, valid_data, model, criterion)
            forwardConnect(encoder, decoder)
            local decoderInput = { input[{{sentlen + 1}, { batch_idx + 1, batch_idx + batch_size }}] }
            local decoderOutput = { decoder:forward(decoderInput[1])[1] }
-           for t = 2, output_mb:size(1) do
+           for t = 2, #output_mb do
              local _, nextInput = decoderOutput[t-1]:max(2)
              table.insert(decoderInput, nextInput:reshape(1,batch_size):double())
              table.insert(decoderOutput, decoder:forward(decoderInput[t])[1])
