@@ -99,7 +99,8 @@ function train(data, valid_data, encoder, decoder, criterion)
    decParams:uniform(-opt.param_init, opt.param_init)
 
    for epoch = 1, opt.epochs do
-      model:training()
+      encoder:training()
+      decoder:training()
       print('epoch: ' .. epoch)
       local trainErr = 0
       for i = 1, data:size() do
@@ -152,7 +153,8 @@ function train(data, valid_data, encoder, decoder, criterion)
            encParams:add(encGradParams:mul(-opt.learning_rate))
            decParams:add(decGradParams:mul(-opt.learning_rate))
 
-           model:forget()
+           encoder:forget()
+           decoder:forget()
         end
       end
       print('Training error', trainErr)
@@ -160,7 +162,7 @@ function train(data, valid_data, encoder, decoder, criterion)
       --local savefile = string.format('%s_epoch%.2f_%.2f.t7',
       --                               opt.savefile, epoch, score)
       local savefile = string.format('%s_epoch%.2f.t7', opt.savefile, epoch)
-      torch.save(savefile, model)
+      --torch.save(savefile, encoder)
       print('saving checkpoint to ' .. savefile)
 
       --if score > last_score - .3 then
