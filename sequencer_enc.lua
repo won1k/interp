@@ -113,7 +113,7 @@ function train(data, valid_data, model, criterion)
            local batch_size = math.min(sent_idx * opt.bsize, nsent) - batch_idx
            local input_mb = input[{{1, sentlen}, { batch_idx + 1, batch_idx + batch_size }}] -- sentlen x batch_size tensor
            local output_mb = output[{{}, { batch_idx + 1, batch_idx + batch_size }}]
-           --output_mb = nn.SplitTable(1):forward(output_mb) -- sentlen table of batch_size
+           output_mb = nn.SplitTable(1):forward(output_mb) -- sentlen table of batch_size
 
            -- Encoder forward prop
            local encoderOutput = encoder:forward(input_mb) -- sentlen table of batch_size x rnn_size
@@ -127,12 +127,6 @@ function train(data, valid_data, model, criterion)
              table.insert(decoderOutput, decoder:forward(decoderInput[t])[1])
            end
            decoderInput = nn.JoinTable(1):forward(decoderInput)
-           for t = 1, #decoderOutput do
-             decoderOutput[t] = decoderOutput[t]:reshape(1, batch_size, data.nfeatures)
-           end
-           decoderOutput = nn.JoinTable(1):forward(decoderOutput)
-           print(decoderOutput:size())
-           print(output_mb:size())
            print(criterion:forward(decoderOutput, output_mb))
            -- Decoder backward prop
            trainErr = trainErr + criterion:forward(decoderOutput, output_mb)
