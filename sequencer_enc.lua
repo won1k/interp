@@ -127,6 +127,7 @@ function train(data, valid_data, model, criterion)
              table.insert(decoderOutput, decoder:forward(decoderInput[t])[1])
            end
            decoderInput = nn.JoinTable(1):forward(decoderInput)
+           print(criterion)
            print(criterion:forward(decoderOutput, output_mb))
            -- Decoder backward prop
            trainErr = trainErr + criterion:forward(decoderOutput, output_mb)
