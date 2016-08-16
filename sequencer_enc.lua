@@ -85,9 +85,16 @@ end
 
 function backwardConnect(enc, dec)
    for i = 1, #enc.lstmLayers do
-         enc.lstmLayers[i].userNextGradCell = nn.rnn.recursiveCopy(enc.lstmLayers[i].userNextGradCell, dec.lstmLayers[i].userGradPrevCell)
-         enc.lstmLayers[i].gradPrevOutput = nn.rnn.recursiveCopy(enc.lstmLayers[i].gradPrevOutput, dec.lstmLayers[i].userGradPrevOutput)
+      enc.lstmLayers[i].userNextGradCell = nn.rnn.recursiveCopy(enc.lstmLayers[i].userNextGradCell, dec.lstmLayers[i].userGradPrevCell)
+      enc.lstmLayers[i].gradPrevOutput = nn.rnn.recursiveCopy(enc.lstmLayers[i].gradPrevOutput, dec.lstmLayers[i].userGradPrevOutput)
    end
+end
+
+function storeState(dec)
+  for i = 1, #dec.lstmLayers do
+    dec.lstmLayers[i].userPrevOutput = dec.lstmLayers[i].output
+    dec.lstmLayers[i].userPrevCell = dec.lstmLayers[i].cell
+  end
 end
 
 
@@ -125,6 +132,7 @@ function train(data, valid_data, encoder, decoder, criterion)
            for t = 2, #output_mb do
              local _, nextInput = decoderOutput[t-1]:max(2)
              table.insert(decoderInput, nextInput:reshape(1,batch_size))
+             storeState(decoder)
              table.insert(decoderOutput, decoder:forward(decoderInput[t])[1])
            end
            decoderInput = nn.JoinTable(1):forward(decoderInput)
@@ -136,9 +144,7 @@ function train(data, valid_data, encoder, decoder, criterion)
            -- Decoder backward prop
            trainErr = trainErr + criterion:forward(decoderOutput, output_mb)
            decoder:zeroGradParameters()
-           print(decoder:forward(decoderInput))
-           print(criterion:backward(decoderOutput, output_mb))
-           decoder:backward(decoderInput, criterion:backward(decoderOutput, output_mb))
+           decoder:backward(decoder:forward(decoderInput), criterion:backward(decoderOutput, output_mb))
            -- Encoder backward prop
            encoder:zeroGradParameters()
            backwardConnect(encoder, decoder)
@@ -176,6 +182,8 @@ function train(data, valid_data, encoder, decoder, criterion)
       --   opt.learning_rate = opt.learning_rate / 2
       --end
       --last_score = score
+      encoder:forget()
+      decoder:forget()
    end
 end
 
