@@ -133,6 +133,7 @@ function train(data, valid_data, model, criterion)
            decoderOutput = nn.JoinTable(1):forward(decoderOutput)
            print(decoderOutput:size())
            print(output_mb:size())
+           print(criterion:forward(decoderOutput, output_mb))
            -- Decoder backward prop
            trainErr = trainErr + criterion:forward(decoderOutput, output_mb)
            decoder:zeroGradParameters()
