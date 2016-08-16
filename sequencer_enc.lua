@@ -104,13 +104,13 @@ function train(data, valid_data, encoder, decoder, criterion)
    local decParams, decGradParams = decoder:getParameters()
    encParams:uniform(-opt.param_init, opt.param_init)
    decParams:uniform(-opt.param_init, opt.param_init)
-   encoder:training()
-   decoder:training()
 
    for epoch = 1, opt.epochs do
       print('epoch: ' .. epoch)
       local trainErr = 0
       for i = 1, data:size() do
+        encoder:training()
+        decoder:training()
          local sentlen = data.lengths[i]
          print(sentlen)
          local d = data[sentlen]
