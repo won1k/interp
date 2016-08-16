@@ -14,12 +14,13 @@ cmd:option('-seqlen', 20, 'sequence length')
 cmd:option('-max_grad_norm', 5, 'max l2-norm of concatenation of all gradParam tensors')
 cmd:option('-dropoutProb', 0.5, 'dropoff param')
 cmd:option('-wide', 1, '1 if wide convolution (padded), 0 otherwise')
+cmd:option('-auto', 1, '1 if autoencoder (i.e. target = source), 0 otherwise')
 
-cmd:option('-data_file','convert_seq/data.hdf5','data directory. Should contain data.hdf5 with input data')
-cmd:option('-val_data_file','convert_seq/data_test.hdf5','data directory. Should contain data.hdf5 with input data')
-cmd:option('-gpu',1,'which gpu to use. -1 = use CPU')
+cmd:option('-data_file','convert_seq/data_enc.hdf5','data directory. Should contain data.hdf5 with input data')
+cmd:option('-val_data_file','convert_seq/data_enc_test.hdf5','data directory. Should contain data.hdf5 with input data')
+cmd:option('-gpu', 1, 'which gpu to use. -1 = use CPU')
 cmd:option('-param_init', 0.05, 'initialize parameters at')
-cmd:option('-savefile', 'checkpoint_seq/lm','filename to autosave the checkpoint to')
+cmd:option('-savefile', 'checkpoint_seq/enc','filename to autosave the checkpoint to')
 
 opt = cmd:parse(arg)
 
@@ -33,15 +34,23 @@ function data:__init(opt, data_file)
 
    self.lengths = f:read('sent_lens'):all()
    self.max_len = f:read('max_len'):all()[1]
-   self.nclasses = f:read('nclasses_chunk'):all():long()[1]
    self.nfeatures = f:read('nfeatures'):all():long()[1]
+   if opt.auto == 1 then
+     self.nclasses = f:read('nfeatures'):all():long()[1]
+   else
+     self.nclasses = f:read('nclasses'):all():long()[1]
+   end
    self.length = self.lengths:size(1)
-   self.dwin = f:read('dwin'):all():long()[1]
+   self.dwin = opt.dwin
 
    for i = 1, self.length do
      local len = self.lengths[i]
      self.input[len] = f:read(tostring(len)):all():double()
-     self.output[len] = f:read(tostring(len) .. "_chunks"):all():double()
+     if opt.auto == 1 then
+       self.output[len] = self.input[len]
+     else
+       self.output[len] = f:read(tostring(len) .. "_target"):all():double()
+     end
      if opt.gpu > 0 then
        self.input[len] = self.input[len]:cuda()
        self.output[len] = self.output[len]:cuda()
@@ -59,69 +68,106 @@ function data.__index(self, idx)
    if type(idx) == "string" then
       return data[idx]
    else
-      input = self.input[idx]:transpose(1, 2)
+      input = self.input[idx]:transpose(1,2)
       output = self.output[idx]:transpose(1,2)
    end
    return {input, output}
 end
 
+-- Connect functions for encoder-decoder
+function forwardConnect(enc, dec)
+   for i = 1, #enc.lstmLayers do
+      local seqlen = #enc.lstmLayers[i].outputs
+      dec.lstmLayers[i].userPrevOutput = nn.rnn.recursiveCopy(dec.lstmLayers[i].userPrevOutput, enc.lstmLayers[i].outputs[seqlen])
+      dec.lstmLayers[i].userPrevCell = nn.rnn.recursiveCopy(dec.lstmLayers[i].userPrevCell, enc.lstmLayers[i].cells[seqlen])
+   end
+end
+
+function backwardConnect(enc, dec)
+   for i = 1, #enc.lstmLayers do
+         enc.lstmLayers[i].userNextGradCell = nn.rnn.recursiveCopy(enc.lstmLayers[i].userNextGradCell, dec.lstmLayers[i].userGradPrevCell)
+         enc.lstmLayers[i].gradPrevOutput = nn.rnn.recursiveCopy(enc.lstmLayers[i].gradPrevOutput, dec.lstmLayers[i].userGradPrevOutput)
+   end
+end
+
 
 function train(data, valid_data, model, criterion)
    local last_score = 1e9
-   local params, grad_params = model:getParameters()
-   params:uniform(-opt.param_init, opt.param_init)
+   local encParams, encGradParams = encoder:getParameters()
+   local decParams, decGradParams = decoder:getParameters()
+   encParams:uniform(-opt.param_init, opt.param_init)
+   decParams:uniform(-opt.param_init, opt.param_init)
+
    for epoch = 1, opt.epochs do
       model:training()
       print('epoch: ' .. epoch)
+      local trainErr = 0
       for i = 1, data:size() do
          local sentlen = data.lengths[i]
          print(sentlen)
          local d = data[sentlen]
          local input, output = d[1], d[2]
          local nsent = input:size(2) -- sentlen x nsent input
-         -- If wide convolution, add length for padding
-         if opt.wide > 0 then
-           sentlen = sentlen + 2 * torch.floor(data.dwin/2)
-         end
          for sent_idx = 1, torch.ceil(nsent / opt.bsize) do
            local batch_idx = (sent_idx - 1) * opt.bsize
            local batch_size = math.min(sent_idx * opt.bsize, nsent) - batch_idx
-           for col_idx = 1, torch.ceil(sentlen / opt.seqlen) do
-             local seq_idx = (col_idx - 1) * opt.seqlen
-             local sequence_len = math.min(col_idx * opt.seqlen, sentlen) - seq_idx
-             local input_mb = input[{
-               { seq_idx + 1, seq_idx + sequence_len },
-               { batch_idx + 1, batch_idx + batch_size }}] -- sequence_len x batch_size tensor
-             local output_mb = output[{
-               { seq_idx + 1, seq_idx + sequence_len },
-               { batch_idx + 1, batch_idx + batch_size }}]
-             output_mb = nn.SplitTable(1):forward(output_mb) -- sequence_len table of batch_size
+           local input_mb = input[{{1, sentlen}, { batch_idx + 1, batch_idx + batch_size }}] -- sentlen x batch_size tensor
+           local output_mb = output[{{}, { batch_idx + 1, batch_idx + batch_size }}]
+           output_mb = nn.SplitTable(1):forward(output_mb) -- sentlen table of batch_size
 
-             criterion:forward(model:forward(input_mb), output_mb)
-             model:zeroGradParameters()
-             model:backward(input_mb, criterion:backward(model.output, output_mb))
+           -- Encoder forward prop
+           local encoderOutput = encoder:forward(input_mb) -- sentlen table of batch_size x rnn_size
+           -- Decoder forward prop
+           forwardConnect(encoder, decoder)
+           local decoderInput = { input[{{sentlen + 1}, { batch_idx + 1, batch_idx + batch_size }}] }
+           local decoderOutput = { decoder:forward(decoderInput[1])[1] }
+           for t = 2, #output_mb do
+             local _, nextInput = decoderOutput[t-1]:max(2)
+             table.insert(decoderInput, nextInput:reshape(1,batch_size):double())
+             table.insert(decoderOutput, decoder:forward(decoderInput[t])[1])
+           end
+           decoderInput = nn.JoinTable(1):forward(decoderInput)
+           -- Decoder backward prop
+           trainErr = trainErr + criterion:forward(decoderOutput, output_mb)
+           print(trainErr)
+           decoder:zeroGradParameters()
+           decoder:backward(decoderInput, criterion:backward(decoderOutput, output_mb))
+           -- Encoder backward prop
+           encoder:zeroGradParameters()
+           backwardConnect(encoder, decoder)
+           local encGrads = {}
+           for t = 1, #encoderOutput do
+             table.insert(encGrads, encoderOutput[t]:zero())
+           end
+           encoder:backward(input_mb, encGrads)
 
-             -- Grad Norm.
-             local grad_norm = grad_params:norm()
-             if grad_norm > opt.max_grad_norm then
-                grad_params:mul(opt.max_grad_norm / grad_norm)
-             end
-             params:add(grad_params:mul(-opt.learning_rate))
-          end
-          model:forget()
+           -- Grad norm and update
+           local encGradNorm = encGradParams:norm()
+           local decGradNorm = decGradParams:norm()
+           if encGradNorm > opt.max_grad_norm then
+              encGradParams:mul(opt.max_grad_norm / encGradNorm)
+           end
+           if decGradNorm > opt.max_grad_norm then
+              decGradParams:mul(opt.max_grad_norm / decGradNorm)
+           end
+           encParams:add(encGradParams:mul(-opt.learning_rate))
+           decParams:add(decGradParams:mul(-opt.learning_rate))
+
+           model:forget()
         end
       end
-      local score = eval(valid_data, model)
-      local savefile = string.format('%s_epoch%.2f_%.2f.t7',
-                                     opt.savefile, epoch, score)
-      --local savefile = string.format('%s_epoch%.2f.t7', opt.savefile, epoch)
+      print('Training error', trainErr)
+      --local score = eval(valid_data, model)
+      --local savefile = string.format('%s_epoch%.2f_%.2f.t7',
+      --                               opt.savefile, epoch, score)
+      local savefile = string.format('%s_epoch%.2f.t7', opt.savefile, epoch)
       torch.save(savefile, model)
       print('saving checkpoint to ' .. savefile)
 
-      if score > last_score - .3 then
-         opt.learning_rate = opt.learning_rate / 2
-      end
-      last_score = score
+      --if score > last_score - .3 then
+      --   opt.learning_rate = opt.learning_rate / 2
+      --end
+      --last_score = score
    end
 end
 
@@ -150,26 +196,40 @@ function eval(data, model)
 end
 
 function make_model(train_data)
-   local model = nn.Sequential()
-   model.lookups_zero = {}
-
-   model:add(nn.LookupTable(train_data.nfeatures, opt.word_vec_size))
-   model:add(nn.SplitTable(1, 3))
-
-   model:add(nn.Sequencer(nn.FastLSTM(opt.rnn_size, opt.rnn_size)))
+   -- Encoder LSTM
+   local encoder = nn.Sequential()
+   encoder:add(nn.LookupTable(train_data.nfeatures, opt.word_vec_size)) -- length x bsize x embed
+   encoder:add(nn.SplitTable(1,3))
+   encoder.lstmLayers = {}
+   encoder.lstmLayers[1] = nn.FastLSTM(opt.word_vec_size, opt.rnn_size)
+   encoder:add(nn.Sequencer(encoder.lstmLayers[1]))
    for j = 2, opt.num_layers do
-      model:add(nn.Sequencer(nn.Dropout(opt.dropoutProb)))
-      model:add(nn.Sequencer(nn.FastLSTM(opt.rnn_size, opt.rnn_size)))
+      encoder:add(nn.Sequencer(nn.Dropout(opt.dropoutProb)))
+      encoder.lstmLayers[j] = nn.FastLSTM(opt.rnn_size, opt.rnn_size)
+      encoder:add(nn.Sequencer(encoder.lstmLayers[j]))
    end
-
-   model:add(nn.Sequencer(nn.Dropout(opt.dropoutProb)))
-   model:add(nn.Sequencer(nn.Linear(opt.rnn_size, train_data.nclasses)))
-   model:add(nn.Sequencer(nn.LogSoftMax()))
-
-   model:remember('both')
+   encoder:remember('both')
+   -- Decoder LSTM
+   local decoder = nn.Sequential()
+   decoder:add(nn.LookupTable(train_data.nfeatures, opt.word_vec_size))
+   decoder:add(nn.SplitTable(1,3))
+   decoder.lstmLayers = {}
+   decoder.lstmLayers[1] = nn.FastLSTM(opt.rnn_size, opt.rnn_size)
+   decoder:add(nn.Sequencer(decoder.lstmLayers[1]))
+   for j = 2, opt.num_layers do
+      decoder:add(nn.Sequencer(nn.Dropout(opt.dropoutProb)))
+      decoder.lstmLayers[j] = nn.FastLSTM(opt.rnn_size, opt.rnn_size)
+      decoder:add(nn.Sequencer(decoder.lstmLayers[j]))
+   end
+   -- Postprocess layers
+   decoder:add(nn.Sequencer(nn.Linear(opt.rnn_size, opt.rnn_size)))
+   decoder:add(nn.Sequencer(nn.Tanh()))
+   decoder:add(nn.Sequencer(nn.Linear(opt.rnn_size, train_data.nclasses)))
+   decoder:add(nn.Sequencer(nn.LogSoftMax()))
+   decoder:remember('both')
+   -- Criterion
    criterion = nn.SequencerCriterion(nn.ClassNLLCriterion())
-
-   return model, criterion
+   return encoder, decoder, criterion
 end
 
 function main()
@@ -187,7 +247,7 @@ function main()
    -- Create the data loader class.
    local train_data = data.new(opt, opt.data_file)
    local valid_data = data.new(opt, opt.val_data_file)
-   model, criterion = make_model(train_data)
+   encoder, decoder, criterion = make_model(train_data)
 
    if opt.gpu >= 0 then
       model:cuda()
@@ -195,7 +255,7 @@ function main()
    end
    --torch.save('train_data.t7', train_data)
    --torch.save('valid_data.t7', valid_data)
-   train(train_data, valid_data, model, criterion)
+   train(train_data, valid_data, encoder, decoder, criterion)
 end
 
 main()

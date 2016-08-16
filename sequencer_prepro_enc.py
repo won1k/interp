@@ -11,8 +11,6 @@ class Indexer:
         self.pos_counter = 1
         self.d = {}
         self.rev = {}
-        self.chunk_d = {}
-        self.pos_d = {}
         self._lock = False
         self.max_len = 0
 
@@ -25,40 +23,12 @@ class Indexer:
             self.counter += 1
         return self.d[w]
 
-    def convert_chunk(self, t):
-        if t not in self.chunk_d:
-            self.chunk_d[t] = self.chunk_counter
-            self.chunk_counter += 1
-        return self.chunk_d[t]
-
-    def convert_pos(self, t):
-        if t not in self.pos_d:
-            self.pos_d[t] = self.pos_counter
-            self.pos_counter += 1
-        return self.pos_d[t]
-
     def lock(self):
         self._lock = True
 
     def write(self, outfile):
         out = open(outfile, "w")
         items = [(v, k) for k, v in self.d.iteritems()]
-        items.sort()
-        for v, k in items:
-            print >>out, k, v
-        out.close()
-
-    def write_chunks(self, outfile):
-        out = open(outfile, "w")
-        items = [(v, k) for k, v in self.chunk_d.iteritems()]
-        items.sort()
-        for v, k in items:
-            print >>out, k, v
-        out.close()
-
-    def write_pos(self, outfile):
-        out = open(outfile, "w")
-        items = [(v, k) for k, v in self.pos_d.iteritems()]
         items.sort()
         for v, k in items:
             print >>out, k, v
@@ -111,59 +81,41 @@ def get_data(args):
         # Parse and convert data
         with open(datafile, 'r') as f:
             sentences = {}
-            pos_seqs = {}
-            chunk_seqs = {}
             sentence = []
-            pos_seq = []
-            chunk_seq = []
             for line in f:
                 if not line.strip():
                     length = len(sentence)
+                    sentence.append(target_indexer.convert('</s>'))
                     target_indexer.max_len = max(target_indexer.max_len, length)
                     if length in sentences:
                         sentences[length].append(sentence)
-                        pos_seqs[length].append(pos_seq)
-                        chunk_seqs[length].append(chunk_seq)
                     else:
                         sentences[length] = [sentence]
-                        pos_seqs[length] = [pos_seq]
-                        chunk_seqs[length] = [chunk_seq]
                     sentence = []
-                    pos_seq = []
-                    chunk_seq = []
                     continue
                 sentence.append(target_indexer.convert(line.strip().split(' ')[0]))
-                pos_seq.append(target_indexer.convert_pos(line.strip().split(' ')[1]))
-                chunk_seq.append(target_indexer.convert_chunk(line.strip().split(' ')[2]))
         sent_lens = sentences.keys()
 
         # Reoutput raw data ordered by length
-        sequencer_template(datafile, sentences, pos_seqs, chunk_seqs)
         text_output(datafile, sentences)
 
         # Add padding for windowed models
         if dwin > 0:
-            sentences, pos_seqs, chunk_seqs = add_padding(sentences, pos_seqs, chunk_seqs, sent_lens, dwin)
+            sentences = add_padding(sentences, sent_lens, dwin)
 
         # Output HDF5 for torch
         f = h5py.File(outfile, "w")
         f["sent_lens"] = np.array(sent_lens, dtype=int)
         for length in sent_lens:
             f[str(length)] = np.array(sentences[length], dtype=int)
-            f[str(length) + "_pos"] = np.array(pos_seqs[length], dtype = int)
-            f[str(length) + "_chunks"] = np.array(chunk_seqs[length], dtype = int)
         f["max_len"] = np.array([target_indexer.max_len], dtype=int)
         f["nfeatures"] = np.array([target_indexer.counter - 1], dtype=int)
-        f["nclasses_pos"] = np.array([target_indexer.pos_counter - 1], dtype=int)
-        f["nclasses_chunk"] = np.array([target_indexer.chunk_counter - 1], dtype=int)
         f["dwin"] = np.array([dwin], dtype=int)
 
     convert(args.trainfile, args.outputfile + ".hdf5", args.dwin)
     target_indexer.lock()
     convert(args.testfile, args.outputfile + "_test" + ".hdf5", args.dwin)
     target_indexer.write(args.outputfile + ".dict")
-    target_indexer.write_chunks(args.outputfile + ".chunks.dict")
-    target_indexer.write_pos(args.outputfile + ".pos.dict")
 
 def main(arguments):
     global args
