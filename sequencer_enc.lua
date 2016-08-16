@@ -127,7 +127,6 @@ function train(data, valid_data, encoder, decoder, criterion)
            local encoderOutput = encoder:forward(input_mb) -- sentlen table of batch_size x rnn_size
            -- Decoder forward prop
            forwardConnect(encoder, decoder)
-           decoder:backwardOnline()
            local decoderInput = { input[{{sentlen + 1}, { batch_idx + 1, batch_idx + batch_size }}] }
            local decoderOutput = { decoder:forward(decoderInput[1])[1] }
            for t = 2, #output_mb do
@@ -252,7 +251,7 @@ function main()
     -- parse input params
    opt = cmd:parse(arg)
 
-   if opt.gpu >= 0 then
+   if opt.gpu > 0 then
       print('using CUDA on GPU ' .. opt.gpu .. '...')
       require 'cutorch'
       require 'cunn'
@@ -265,7 +264,7 @@ function main()
    local valid_data = data.new(opt, opt.val_data_file)
    encoder, decoder, criterion = make_model(train_data)
 
-   if opt.gpu >= 0 then
+   if opt.gpu > 0 then
       encoder:cuda()
       decoder:cuda()
       criterion:cuda()
