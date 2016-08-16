@@ -250,7 +250,8 @@ function main()
    encoder, decoder, criterion = make_model(train_data)
 
    if opt.gpu >= 0 then
-      model:cuda()
+      encoder:cuda()
+      decoder:cuda()
       criterion:cuda()
    end
    --torch.save('train_data.t7', train_data)
