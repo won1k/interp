@@ -127,6 +127,7 @@ function train(data, valid_data, encoder, decoder, criterion)
            local encoderOutput = encoder:forward(input_mb) -- sentlen table of batch_size x rnn_size
            -- Decoder forward prop
            forwardConnect(encoder, decoder)
+           decoder:backwardOnline()
            local decoderInput = { input[{{sentlen + 1}, { batch_idx + 1, batch_idx + batch_size }}] }
            local decoderOutput = { decoder:forward(decoderInput[1])[1] }
            for t = 2, #output_mb do
