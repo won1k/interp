@@ -144,7 +144,7 @@ function train(data, valid_data, encoder, decoder, criterion)
            -- Decoder backward prop
            trainErr = trainErr + criterion:forward(decoderOutput, output_mb)
            decoder:zeroGradParameters()
-           decoder:backward(decoder:forward(decoderInput), criterion:backward(decoderOutput, output_mb))
+           decoder:backward(decoderInput, criterion:backward(decoder:forward(decoderInput), output_mb))
            -- Encoder backward prop
            encoder:zeroGradParameters()
            backwardConnect(encoder, decoder)
