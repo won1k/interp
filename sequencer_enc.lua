@@ -120,13 +120,16 @@ function train(data, valid_data, model, criterion)
            -- Decoder forward prop
            forwardConnect(encoder, decoder)
            local decoderInput = { input[{{sentlen + 1}, { batch_idx + 1, batch_idx + batch_size }}] }
-           local decoderOutput = { decoder:forward(decoderInput[1])[1]:reshape(1, batch_size, data.nfeatures) }
+           local decoderOutput = { decoder:forward(decoderInput[1])[1] }
            for t = 2, output_mb:size(1) do
              local _, nextInput = decoderOutput[t-1]:max(2)
              table.insert(decoderInput, nextInput:reshape(1,batch_size):double())
-             table.insert(decoderOutput, decoder:forward(decoderInput[t])[1]:reshape(1, batch_size, data.nfeatures))
+             table.insert(decoderOutput, decoder:forward(decoderInput[t])[1])
            end
            decoderInput = nn.JoinTable(1):forward(decoderInput)
+           for t = 1, #decoderOutput do
+             decoderOutput[t] = decoderOutput[t]:reshape(1, batch_size, data.nfeatures)
+           end
            decoderOutput = nn.JoinTable(1):forward(decoderOutput)
            -- Decoder backward prop
            trainErr = trainErr + criterion:forward(decoderOutput, output_mb)
