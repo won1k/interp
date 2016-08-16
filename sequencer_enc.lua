@@ -166,6 +166,8 @@ function train(data, valid_data, encoder, decoder, criterion)
            encParams:add(encGradParams:mul(-opt.learning_rate))
            decParams:add(decGradParams:mul(-opt.learning_rate))
         end
+        encoder:forget()
+        decoder:forget()
       end
       print('Training error', trainErr)
       --local score = eval(valid_data, model)
