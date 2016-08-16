@@ -91,7 +91,7 @@ function backwardConnect(enc, dec)
 end
 
 
-function train(data, valid_data, model, criterion)
+function train(data, valid_data, encoder, decoder, criterion)
    local last_score = 1e9
    local encParams, encGradParams = encoder:getParameters()
    local decParams, decGradParams = decoder:getParameters()
@@ -127,8 +127,6 @@ function train(data, valid_data, model, criterion)
              table.insert(decoderOutput, decoder:forward(decoderInput[t])[1])
            end
            decoderInput = nn.JoinTable(1):forward(decoderInput)
-           print(criterion)
-           print(criterion:forward(decoderOutput, output_mb))
            -- Decoder backward prop
            trainErr = trainErr + criterion:forward(decoderOutput, output_mb)
            decoder:zeroGradParameters()
