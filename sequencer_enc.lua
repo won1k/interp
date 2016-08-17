@@ -76,8 +76,8 @@ end
 function forwardConnect(enc, dec)
    for i = 1, #enc.lstmLayers do
       local seqlen = #enc.lstmLayers[i].outputs
-      dec.lstmLayers[i].userPrevOutput = nn.rnn.recursiveCopy(dec.lstmLayers[i].userPrevOutput, enc.lstmLayers[i].outputs[seqlen])
-      dec.lstmLayers[i].userPrevCell = nn.rnn.recursiveCopy(dec.lstmLayers[i].userPrevCell, enc.lstmLayers[i].cells[seqlen])
+      dec.lstmLayers[i].userPrevOutput = enc.lstmLayers[i].outputs[seqlen]
+      dec.lstmLayers[i].userPrevCell = enc.lstmLayers[i].cells[seqlen]
    end
 end
 
