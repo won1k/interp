@@ -92,8 +92,8 @@ end
 
 function storeState(dec)
   for i = 1, #dec.lstmLayers do
-    dec.lstmLayers[i].userPrevOutput = dec.lstmLayers[i].output
-    dec.lstmLayers[i].userPrevCell = dec.lstmLayers[i].cell
+    dec.lstmLayers[i].userPrevOutput = nn.rnn.recursiveCopy(dec.lstmLayers[i].userPrevOutput, dec.lstmLayers[i].output)
+    dec.lstmLayers[i].userPrevCell = nn.rnn.recursiveCopy(dec.lstmLayers[i].userPrevCell, dec.lstmLayers[i].cell)
   end
 end
 
@@ -124,12 +124,12 @@ function train(data, valid_data, encoder, decoder, criterion)
            output_mb = nn.SplitTable(1):forward(output_mb) -- sentlen table of batch_size
 
            -- Encoder forward prop
-           encoder:backwardOnline()
-           decoder:backwardOnline()
+           print(input_mb)
            local encoderOutput = encoder:forward(input_mb) -- sentlen table of batch_size x rnn_size
            -- Decoder forward prop
            forwardConnect(encoder, decoder)
            local decoderInput = { input[{{sentlen + 1}, { batch_idx + 1, batch_idx + batch_size }}] }
+           print(decoderInput[1])
            local decoderOutput = { decoder:forward(decoderInput[1])[1] }
            for t = 2, #output_mb do
              local _, nextInput = decoderOutput[t-1]:max(2)
