@@ -110,7 +110,7 @@ function train(data, valid_data, encoder, decoder, criterion)
       local trainErr = 0
       for i = 1, data:size() do
          local sentlen = data.lengths[i]
-         print(sentlen)
+         print("Sentence length: ", sentlen)
          local d = data[sentlen]
          local input, output = d[1], d[2]
          local nsent = input:size(2) -- sentlen x nsent input
@@ -122,11 +122,12 @@ function train(data, valid_data, encoder, decoder, criterion)
            output_mb = nn.SplitTable(1):forward(output_mb) -- sentlen table of batch_size
 
            -- Encoder forward prop
+           print("Encoder step", encoder.lstmLayers[1].step)
            local encoderOutput = encoder:forward(input_mb) -- sentlen table of batch_size x rnn_size
            -- Decoder forward prop
            forwardConnect(encoder, decoder)
            local decoderInput = { input[{{sentlen + 1}, { batch_idx + 1, batch_idx + batch_size }}] }
-           print(encoder.lstmLayers[1].step)
+           print("Decoder step", decoder.lstmLayers[1].step)
            local decoderOutput = { decoder:forward(decoderInput[1])[1] }
            for t = 2, #output_mb do
              local _, nextInput = decoderOutput[t-1]:max(2)
