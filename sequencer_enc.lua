@@ -76,8 +76,8 @@ end
 function forwardConnect(enc, dec)
    for i = 1, #enc.lstmLayers do
       local seqlen = #enc.lstmLayers[i].outputs
-      dec.lstmLayers[i].userPrevOutput = enc.lstmLayers[i].outputs[seqlen]:clone()
-      dec.lstmLayers[i].userPrevCell = enc.lstmLayers[i].cells[seqlen]:clone()
+      dec.lstmLayers[i].userPrevOutput = nn.rnn.recursiveCopy(dec.lstmLayers[i].userPrevOutput, enc.lstmLayers[i].outputs[seqlen])
+      dec.lstmLayers[i].userPrevCell = nn.rnn.recursiveCopy(dec.lstmLayers[i].userPrevCell, enc.lstmLayers[i].cells[seqlen])
    end
 end
 
@@ -128,9 +128,8 @@ function train(data, valid_data, encoder, decoder, criterion)
            -- Decoder forward prop
            forwardConnect(encoder, decoder)
            local decoderInput = { input[{{sentlen + 1}, { batch_idx + 1, batch_idx + batch_size }}] }
-           print(encoder.lstmLayers[1].outputs[1])
-           print(decoder.lstmLayers[1].cell)
-           print(decoder.lstmLayers[1].output)
+           print(encoder.lstmLayers[1].step)
+           print(encoder.lstmLayers[1].prevOutput)
            local decoderOutput = { decoder:forward(decoderInput[1])[1] }
            for t = 2, #output_mb do
              local _, nextInput = decoderOutput[t-1]:max(2)
