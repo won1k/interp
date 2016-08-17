@@ -124,6 +124,8 @@ function train(data, valid_data, encoder, decoder, criterion)
            output_mb = nn.SplitTable(1):forward(output_mb) -- sentlen table of batch_size
 
            -- Encoder forward prop
+           encoder:backwardOnline()
+           decoder:backwardOnline()
            local encoderOutput = encoder:forward(input_mb) -- sentlen table of batch_size x rnn_size
            -- Decoder forward prop
            forwardConnect(encoder, decoder)
