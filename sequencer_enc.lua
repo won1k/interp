@@ -31,7 +31,6 @@ function data:__init(opt, data_file)
    local f = hdf5.open(data_file, 'r')
    self.input = {}
    self.output = {}
-
    self.lengths = f:read('sent_lens'):all()
    self.max_len = f:read('max_len'):all()[1]
    self.nfeatures = f:read('nfeatures'):all():long()[1]
@@ -42,7 +41,6 @@ function data:__init(opt, data_file)
    end
    self.length = self.lengths:size(1)
    self.dwin = opt.dwin
-
    for i = 1, self.length do
      local len = self.lengths[i]
      self.input[len] = f:read(tostring(len)):all():double()
@@ -124,6 +122,8 @@ function train(data, valid_data, encoder, decoder, criterion)
            output_mb = nn.SplitTable(1):forward(output_mb) -- sentlen table of batch_size
 
            -- Encoder forward prop
+           encoder:forget()
+           decoder:forget()
            local encoderOutput = encoder:forward(input_mb) -- sentlen table of batch_size x rnn_size
            -- Decoder forward prop
            forwardConnect(encoder, decoder)
