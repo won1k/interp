@@ -261,7 +261,7 @@ function main()
    -- Create the data loader class.
    local train_data = data.new(opt, opt.data_file)
    local valid_data = data.new(opt, opt.val_data_file)
-   encoder, decoder, criterion = make_model(train_data)
+   local encoder, decoder, criterion = make_model(train_data)
 
    if opt.gpu > 0 then
       encoder:cuda()
