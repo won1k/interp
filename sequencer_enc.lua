@@ -165,7 +165,7 @@ function train(data, valid_data, encoder, decoder, criterion)
            end
            encParams:add(encGradParams:mul(-opt.learning_rate))
            decParams:add(decGradParams:mul(-opt.learning_rate))
-           encoder.lstmLayers[1]:forget()
+           encoder:forget()
            decoder:forget()
         end
       end
