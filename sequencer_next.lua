@@ -132,7 +132,7 @@ function train(train_data, test_data, model, criterion)
         paddedlen = sentlen + 2 * torch.floor(opt.dwin/2)
       end
       if paddedlen > opt.dwin then
-        print(sentlen)
+        print(paddedlen)
         local d = train_data[sentlen]
         local nsent = d[1]:size(1)
         for sent_idx = 1, torch.ceil(nsent / opt.bsize) do
