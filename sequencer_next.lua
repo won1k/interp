@@ -253,7 +253,7 @@ function main()
       require 'cunn';
     end
     if opt.wide == 0 then
-      opt.dwin = 0
+      opt.dwin = 1
     end
 
     -- Load training data
