@@ -122,12 +122,12 @@ function train(data, valid_data, encoder, decoder, criterion)
            output_mb = nn.SplitTable(1):forward(output_mb) -- sentlen table of batch_size
 
            -- Encoder forward prop
-           print("Encoder step", encoder.lstmLayers[1].step)
+           --print("Encoder step", encoder.lstmLayers[1].step)
            local encoderOutput = encoder:forward(input_mb) -- sentlen table of batch_size x rnn_size
            -- Decoder forward prop
            forwardConnect(encoder, decoder)
            local decoderInput = { input[{{sentlen + 1}, { batch_idx + 1, batch_idx + batch_size }}] }
-           print("Decoder step", decoder.lstmLayers[1].step)
+           --print("Decoder step", decoder.lstmLayers[1].step)
            local decoderOutput = { decoder:forward(decoderInput[1])[1] }
            for t = 2, #output_mb do
              local _, nextInput = decoderOutput[t-1]:max(2)
@@ -181,8 +181,8 @@ function train(data, valid_data, encoder, decoder, criterion)
       --   opt.learning_rate = opt.learning_rate / 2
       --end
       --last_score = score
-      encoder:forget()
-      decoder:forget()
+      --encoder:forget()
+      --decoder:forget()
    end
 end
 
