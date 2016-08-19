@@ -252,6 +252,9 @@ function main()
       require 'cutorch';
       require 'cunn';
     end
+    if opt.wide == 0 then
+      opt.dwin = 0
+    end
 
     -- Load training data
     local train_data = data.new(opt.datafile, opt.tagfile)
