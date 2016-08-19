@@ -13,6 +13,7 @@ cmd:option('-savefile', 'checkpoint_seq/tempconv', 'output file for checkpoints'
 cmd:option('-testoutfile', 'seq_test_results.hdf5', 'output file for test')
 cmd:option('-gpu', 0, 'whether to use gpu')
 cmd:option('-wide', 1, '1 if wide convolution (padded), 0 otherwise')
+cmd:option('-conv', 1, '1 if CNN, 0 if feed-forward NN (linear)')
 cmd:option('-task', 'chunks', 'chunks or pos')
 
 -- Hyperparameters
@@ -87,7 +88,11 @@ function make_model(train_data) -- batch_size x sentlen x state_dim tensor input
   local temp = nn.Sequential()
   temp:add(nn.SplitTable(1)) -- batch_size table of sentlen x state_dim
   local temp_seq = nn.Sequential()
-  temp_seq:add(nn.TemporalConvolution(train_data.state_dim, opt.dhid, opt.dwin)) -- batch_size table of (sent_len - 4) x hid_dim
+  if opt.conv > 0 then
+    temp_seq:add(nn.TemporalConvolution(train_data.state_dim, opt.dhid, opt.dwin)) -- batch_size table of (sent_len - 4) x hid_dim
+  else
+    temp_seq:add(nn.Linear(train_data.state_dim, opt.dhid))
+  end
   temp_seq:add(nn.Reshape(opt.dhid, 1, true)) -- batch_size table of (sent_len - 4) x hid_dim x 1
   temp:add(nn.Sequencer(temp_seq))
   temp:add(nn.JoinTable(3)) -- (sent_len - 4) x hid_dim x batch_size
@@ -236,9 +241,12 @@ function main()
    	-- Parse input params
    	opt = cmd:parse(arg)
     if opt.gpu > 0 then
-      require 'cudnn';
       require 'cutorch';
       require 'cunn';
+    end
+    if opt.conv == 0 then
+      opt.dwin = 1
+      opt.wide = 0
     end
 
     -- Load training data

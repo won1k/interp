@@ -214,6 +214,7 @@ function predict(data, model)
   local lengths = {}
   for i = 1, data.nlengths do
     local sentlen = data.lengths[i]
+    local paddedlen = sentlen
     if opt.wide > 0 then
       paddedlen = sentlen + 2*torch.floor(opt.dwin/2)
     end
