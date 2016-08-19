@@ -108,6 +108,7 @@ function train(data, valid_data, encoder, decoder, criterion)
    for epoch = 1, opt.epochs do
       print('epoch: ' .. epoch)
       local trainErr = 0
+      local total = 0
       for i = 1, data:size() do
          local sentlen = data.lengths[i]
          print("Sentence length: ", sentlen)
@@ -143,6 +144,7 @@ function train(data, valid_data, encoder, decoder, criterion)
            end
            -- Decoder backward prop
            trainErr = trainErr + criterion:forward(decoderOutput, output_mb)
+           total = total + sentlen * batch_size
            decoder:zeroGradParameters()
            decoder:backward(decoderInput, criterion:backward(decoder:forward(decoderInput), output_mb))
            -- Encoder backward prop
@@ -169,7 +171,7 @@ function train(data, valid_data, encoder, decoder, criterion)
            decoder:forget()
         end
       end
-      print('Training error', trainErr)
+      print('Training error', trainErr / total)
       --local score = eval(valid_data, model)
       --local savefile = string.format('%s_epoch%.2f_%.2f.t7',
       --                               opt.savefile, epoch, score)
