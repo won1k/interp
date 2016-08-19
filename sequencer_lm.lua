@@ -180,7 +180,6 @@ function main()
       print('using CUDA on GPU ' .. opt.gpu .. '...')
       require 'cutorch'
       require 'cunn'
-      require 'cudnn'
       --cutorch.setDevice(opt.gpu + 1)
    end
 
