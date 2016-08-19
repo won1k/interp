@@ -143,7 +143,7 @@ function train(data, valid_data, encoder, decoder, criterion)
              decoderInput = decoderInput:double()
            end
            -- Decoder backward prop
-           trainErr = trainErr + criterion:forward(decoderOutput, output_mb)
+           trainErr = trainErr + criterion:forward(decoderOutput, output_mb) * batch_size
            total = total + sentlen * batch_size
            decoder:zeroGradParameters()
            decoder:backward(decoderInput, criterion:backward(decoder:forward(decoderInput), output_mb))
