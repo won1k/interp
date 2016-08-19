@@ -253,7 +253,7 @@ function main()
       require 'cutorch';
       require 'cunn';
     end
-    if opt.conv > 0 then
+    if opt.conv == 0 then
       opt.dwin = 1
       opt.wide = 0
     end
