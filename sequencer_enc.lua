@@ -128,12 +128,12 @@ function train(data, valid_data, encoder, decoder, criterion)
            forwardConnect(encoder, decoder)
            local decoderInput = { input[{{sentlen + 1}, { batch_idx + 1, batch_idx + batch_size }}] }
            decoder:remember()
-           local decoderOutput = { decoder:forward(decoderInput[1])[1] }
+           local decoderOutput = { decoder:forward(decoderInput[1])[1]:clone() }
            for t = 2, #output_mb do
              local _, nextInput = decoderOutput[t-1]:max(2)
-             table.insert(decoderInput, nextInput:reshape(1,batch_size))
+             table.insert(decoderInput, nextInput:reshape(1,batch_size):clone())
              --storeState(decoder)
-             table.insert(decoderOutput, decoder:forward(decoderInput[t])[1])
+             table.insert(decoderOutput, decoder:forward(decoderInput[t])[1]:clone())
            end
            decoderInput = nn.JoinTable(1):forward(decoderInput)
            if opt.gpu > 0 then
@@ -147,7 +147,7 @@ function train(data, valid_data, encoder, decoder, criterion)
            decoder:zeroGradParameters()
            decoder:forget()
            forwardConnect(encoder, decoder)
-           local allDecoderOutput = decoder:forward(decoderInput)
+           local allDecoderOutput = decoder:forward(decoderInput):clone()
            local err = 0
            for t = 1, #decoderOutput do
              err = err + (allDecoderOutput[t] - decoderOutput[t]):abs():norm()
@@ -179,8 +179,6 @@ function train(data, valid_data, encoder, decoder, criterion)
            encoder:forget()
            decoder:forget()
         end
-        encoder:forget()
-        decoder:forget()
       end
       print('Training error', trainErr / total)
       --local score = eval(valid_data, model)
