@@ -8,8 +8,7 @@ cmd:option('-rnn_size', 650, 'size of LSTM internal state')
 cmd:option('-word_vec_size', 650, 'dimensionality of word embeddings')
 cmd:option('-num_layers', 2, 'number of layers in the LSTM')
 cmd:option('-epochs', 30, 'number of training epoch')
-cmd:option('-dec_learning_rate', 0.1, 'decoder learning rate')
-cmd:option('-enc_learning_rate', 1, 'encoder learning rate')
+cmd:option('-learning_rate', 0.7, 'learning rate')
 cmd:option('-bsize', 32, 'batch size')
 cmd:option('-seqlen', 20, 'sequence length')
 cmd:option('-max_grad_norm', 5, 'max l2-norm of concatenation of all gradParam tensors')
@@ -147,7 +146,14 @@ function train(data, valid_data, encoder, decoder, criterion)
            trainErr = trainErr + criterion:forward(decoderOutput, output_mb) * batch_size
            total = total + sentlen * batch_size
            decoder:zeroGradParameters()
-           decoder:backward(decoderInput, criterion:backward(decoder:forward(decoderInput), output_mb))
+           local allDecoderOutput = decoder:forward(decoderInput)
+           local err = 0
+           for t = 1, #decoderOutput do
+             err = err + (allDecoderOutput[t] - decoderOutput[t]):abs():max()
+           end
+           print("Error", err)
+           decoder:backward(decoderInput, criterion:backward(decoderOutput, output_mb))
+           print("Decoder norm", decGradParams:norm())
            -- Encoder backward prop
            encoder:zeroGradParameters()
            backwardConnect(encoder, decoder)
@@ -156,6 +162,7 @@ function train(data, valid_data, encoder, decoder, criterion)
              table.insert(encGrads, encoderOutput[t]:zero())
            end
            encoder:backward(input_mb, encGrads)
+           print("Encoder norm", encGradParams:norm())
 
            -- Grad norm and update
            local encGradNorm = encGradParams:norm()
@@ -166,8 +173,8 @@ function train(data, valid_data, encoder, decoder, criterion)
            if decGradNorm > opt.max_grad_norm then
               decGradParams:mul(opt.max_grad_norm / decGradNorm)
            end
-           encParams:add(encGradParams:mul(-opt.enc_learning_rate))
-           decParams:add(decGradParams:mul(-opt.dec_learning_rate))
+           encParams:add(encGradParams:mul(-opt.learning_rate))
+           decParams:add(decGradParams:mul(-opt.learning_rate))
            encoder:forget()
            decoder:forget()
         end
