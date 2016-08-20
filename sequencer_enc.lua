@@ -129,7 +129,7 @@ function train(data, valid_data, encoder, decoder, criterion)
            forwardConnect(encoder, decoder)
            local decoderInput = { input[{{sentlen + 1}, { batch_idx + 1, batch_idx + batch_size }}] }
            --print("Decoder step", decoder.lstmLayers[1].step)
-           model:remember()
+           decoder:remember()
            local decoderOutput = { decoder:forward(decoderInput[1])[1] }
            for t = 2, #output_mb do
              local _, nextInput = decoderOutput[t-1]:max(2)
