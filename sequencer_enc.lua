@@ -149,7 +149,7 @@ function train(data, valid_data, encoder, decoder, criterion)
            local allDecoderOutput = decoder:forward(decoderInput)
            local err = 0
            for t = 1, #decoderOutput do
-             err = err + (allDecoderOutput[t] - decoderOutput[t]):abs():max()
+             err = err + (allDecoderOutput[t] - decoderOutput[t]):abs():norm()
            end
            print("Error", err)
            decoder:backward(decoderInput, criterion:backward(decoderOutput, output_mb))
