@@ -129,9 +129,8 @@ function train(data, valid_data, encoder, decoder, criterion)
            forwardConnect(encoder, decoder)
            local decoderInput = { input[{{sentlen + 1}, { batch_idx + 1, batch_idx + batch_size }}] }
            --print("Decoder step", decoder.lstmLayers[1].step)
+           model:remember()
            local decoderOutput = { decoder:forward(decoderInput[1])[1] }
-           print(decoder.output)
-           print((decoderOutput[1] - decoder.output[1]):max())
            for t = 2, #output_mb do
              local _, nextInput = decoderOutput[t-1]:max(2)
              table.insert(decoderInput, nextInput:reshape(1,batch_size))
@@ -148,6 +147,8 @@ function train(data, valid_data, encoder, decoder, criterion)
            trainErr = trainErr + criterion:forward(decoderOutput, output_mb) * batch_size
            total = total + sentlen * batch_size
            decoder:zeroGradParameters()
+           decoder:forget()
+           forwardConnect(encoder, decoder)
            local allDecoderOutput = decoder:forward(decoderInput)
            local err = 0
            for t = 1, #decoderOutput do
