@@ -147,6 +147,7 @@ function train(data, valid_data, encoder, decoder, criterion)
            total = total + sentlen * batch_size
            decoder:zeroGradParameters()
            decoder:backward(decoderInput, criterion:backward(decoder:forward(decoderInput), output_mb))
+           print("Decoder", decGradParams:norm())
            -- Encoder backward prop
            encoder:zeroGradParameters()
            backwardConnect(encoder, decoder)
@@ -155,6 +156,7 @@ function train(data, valid_data, encoder, decoder, criterion)
              table.insert(encGrads, encoderOutput[t]:zero())
            end
            encoder:backward(input_mb, encGrads)
+           print("Encoder norm", encGradParams:norm())
 
            -- Grad norm and update
            local encGradNorm = encGradParams:norm()
