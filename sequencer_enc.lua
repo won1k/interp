@@ -133,7 +133,7 @@ function train(data, valid_data, encoder, decoder, criterion)
            for t = 2, #output_mb do
              local _, nextInput = decoderOutput[t-1]:max(2)
              table.insert(decoderInput, nextInput:reshape(1,batch_size))
-             storeState(decoder)
+             --storeState(decoder)
              table.insert(decoderOutput, decoder:forward(decoderInput[t])[1])
            end
            decoderInput = nn.JoinTable(1):forward(decoderInput)
