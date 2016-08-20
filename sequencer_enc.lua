@@ -130,7 +130,7 @@ function train(data, valid_data, encoder, decoder, criterion)
            local decoderInput = { input[{{sentlen + 1}, { batch_idx + 1, batch_idx + batch_size }}] }
            --print("Decoder step", decoder.lstmLayers[1].step)
            local decoderOutput = { decoder:forward(decoderInput[1])[1] }
-           print((decoderOutput[1] - decoder.output):max())
+           print((decoderOutput[1] - decoder.output[1]):max())
            for t = 2, #output_mb do
              local _, nextInput = decoderOutput[t-1]:max(2)
              table.insert(decoderInput, nextInput:reshape(1,batch_size))
