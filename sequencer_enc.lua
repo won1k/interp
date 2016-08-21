@@ -134,8 +134,6 @@ function train(data, valid_data, encoder, decoder, criterion)
              table.insert(decoderInput, nextInput:reshape(1,batch_size):clone())
              --storeState(decoder)
              table.insert(decoderOutput, decoder:forward(decoderInput[t])[1]:clone())
-             print(decoderInput)
-             print(decoderOutput)
            end
            decoderInput = nn.JoinTable(1):forward(decoderInput)
            if opt.gpu > 0 then
@@ -152,8 +150,9 @@ function train(data, valid_data, encoder, decoder, criterion)
            local allDecoderOutput = decoder:forward(decoderInput)
            local err = 0
            for t = 1, #decoderOutput do
-             err = err + (allDecoderOutput[t] - decoderOutput[t]):abs():norm()
+             err = err + (allDecoderOutput[t] - decoderOutput[t]):abs():max()
            end
+           print("Max", decoderOutput[1]:max())
            print("Error", err)
            decoder:backward(decoderInput, criterion:backward(decoderOutput, output_mb))
            --print("Decoder norm", decGradParams:norm())
