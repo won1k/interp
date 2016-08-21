@@ -147,7 +147,7 @@ function train(data, valid_data, encoder, decoder, criterion)
            decoder:zeroGradParameters()
            decoder:forget()
            forwardConnect(encoder, decoder)
-           local allDecoderOutput = decoder:forward(decoderInput):clone()
+           local allDecoderOutput = decoder:forward(decoderInput)
            local err = 0
            for t = 1, #decoderOutput do
              err = err + (allDecoderOutput[t] - decoderOutput[t]):abs():norm()
