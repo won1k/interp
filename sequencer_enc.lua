@@ -149,6 +149,7 @@ function train(data, valid_data, encoder, decoder, criterion)
            forwardConnect(encoder, decoder)
            local allDecoderOutput = decoder:forward(decoderInput)
            local err = 0
+           print((allDecoderOutput[1] - decoderOutput[1]):abs():max())
            for t = 1, #decoderOutput do
              err = err + (allDecoderOutput[t] - decoderOutput[t]):abs():max()
            end
