@@ -12,8 +12,7 @@ cmd:option('-learning_rate', 0.7, 'learning rate')
 cmd:option('-bsize', 32, 'batch size')
 cmd:option('-seqlen', 20, 'sequence length')
 cmd:option('-max_grad_norm', 5, 'max l2-norm of concatenation of all gradParam tensors')
-cmd:option('-dropoutProb', 0.5, 'dropoff param')
-cmd:option('-wide', 1, '1 if wide convolution (padded), 0 otherwise')
+--cmd:option('-dropoutProb', 0.5, 'dropoff param')
 cmd:option('-auto', 1, '1 if autoencoder (i.e. target = source), 0 otherwise')
 
 cmd:option('-data_file','convert_seq/data_enc.hdf5','data directory. Should contain data.hdf5 with input data')
@@ -76,10 +75,10 @@ end
 function forwardConnect(enc, dec)
    for i = 1, #enc.lstmLayers do
       local seqlen = #enc.lstmLayers[i].outputs
-      --dec.lstmLayers[i].userPrevOutput = nn.rnn.recursiveCopy(dec.lstmLayers[i].userPrevOutput, enc.lstmLayers[i].outputs[seqlen])
-      --dec.lstmLayers[i].userPrevCell = nn.rnn.recursiveCopy(dec.lstmLayers[i].userPrevCell, enc.lstmLayers[i].cells[seqlen])
-      dec.lstmLayers[i].userPrevOutput = enc.lstmLayers[i].outputs[seqlen]:clone()
-      dec.lstmLayers[i].userPrevCell = enc.lstmLayers[i].cells[seqlen]:clone()
+      dec.lstmLayers[i].userPrevOutput = nn.rnn.recursiveCopy(dec.lstmLayers[i].userPrevOutput, enc.lstmLayers[i].outputs[seqlen])
+      dec.lstmLayers[i].userPrevCell = nn.rnn.recursiveCopy(dec.lstmLayers[i].userPrevCell, enc.lstmLayers[i].cells[seqlen])
+      --dec.lstmLayers[i].userPrevOutput = enc.lstmLayers[i].outputs[seqlen]:clone()
+      --dec.lstmLayers[i].userPrevCell = enc.lstmLayers[i].cells[seqlen]:clone()
    end
 end
 
@@ -234,7 +233,7 @@ function make_model(train_data)
    encoder.lstmLayers[1] = nn.FastLSTM(opt.word_vec_size, opt.rnn_size)
    encoder:add(nn.Sequencer(encoder.lstmLayers[1]))
    for j = 2, opt.num_layers do
-      encoder:add(nn.Sequencer(nn.Dropout(opt.dropoutProb)))
+      --encoder:add(nn.Sequencer(nn.Dropout(opt.dropoutProb)))
       encoder.lstmLayers[j] = nn.FastLSTM(opt.rnn_size, opt.rnn_size)
       encoder:add(nn.Sequencer(encoder.lstmLayers[j]))
    end
@@ -247,7 +246,7 @@ function make_model(train_data)
    decoder.lstmLayers[1] = nn.FastLSTM(opt.rnn_size, opt.rnn_size)
    decoder:add(nn.Sequencer(decoder.lstmLayers[1]))
    for j = 2, opt.num_layers do
-      decoder:add(nn.Sequencer(nn.Dropout(opt.dropoutProb)))
+      --decoder:add(nn.Sequencer(nn.Dropout(opt.dropoutProb)))
       decoder.lstmLayers[j] = nn.FastLSTM(opt.rnn_size, opt.rnn_size)
       decoder:add(nn.Sequencer(decoder.lstmLayers[j]))
    end
