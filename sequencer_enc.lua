@@ -127,7 +127,7 @@ function train(data, valid_data, encoder, decoder, criterion)
            -- Decoder forward prop
            forwardConnect(encoder, decoder)
            local decoderInput = { input[{{sentlen + 1}, { batch_idx + 1, batch_idx + batch_size }}] }
-           --decoder:remember()
+           decoder:remember()
            local decoderOutput = { decoder:forward(decoderInput[1])[1]:clone() }
            for t = 2, #output_mb do
              local _, nextInput = decoderOutput[t-1]:max(2)
