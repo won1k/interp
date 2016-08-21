@@ -131,7 +131,8 @@ function train(data, valid_data, encoder, decoder, criterion)
            local decoderOutput = { decoder:forward(decoderInput[1])[1]:clone() }
            for t = 2, #output_mb do
              local _, nextInput = decoderOutput[t-1]:max(2)
-             table.insert(decoderInput, nextInput:reshape(1,batch_size):clone())
+             table.insert(decoderInput, nextInput:reshape(1,batch_size):zero())
+             --table.insert(decoderInput, nextInput:reshape(1,batch_size):clone())
              --storeState(decoder)
              table.insert(decoderOutput, decoder:forward(decoderInput[t])[1]:clone())
            end
@@ -149,11 +150,9 @@ function train(data, valid_data, encoder, decoder, criterion)
            forwardConnect(encoder, decoder)
            local allDecoderOutput = decoder:forward(decoderInput)
            local err = 0
-           print((allDecoderOutput[1] - decoderOutput[1]):abs():max())
            for t = 1, #decoderOutput do
              err = err + (allDecoderOutput[t] - decoderOutput[t]):abs():max()
            end
-           print("Max", decoderOutput[1]:max())
            print("Error", err)
            decoder:backward(decoderInput, criterion:backward(decoderOutput, output_mb))
            --print("Decoder norm", decGradParams:norm())
