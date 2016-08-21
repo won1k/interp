@@ -76,8 +76,10 @@ end
 function forwardConnect(enc, dec)
    for i = 1, #enc.lstmLayers do
       local seqlen = #enc.lstmLayers[i].outputs
-      dec.lstmLayers[i].userPrevOutput = nn.rnn.recursiveCopy(dec.lstmLayers[i].userPrevOutput, enc.lstmLayers[i].outputs[seqlen])
-      dec.lstmLayers[i].userPrevCell = nn.rnn.recursiveCopy(dec.lstmLayers[i].userPrevCell, enc.lstmLayers[i].cells[seqlen])
+      --dec.lstmLayers[i].userPrevOutput = nn.rnn.recursiveCopy(dec.lstmLayers[i].userPrevOutput, enc.lstmLayers[i].outputs[seqlen])
+      --dec.lstmLayers[i].userPrevCell = nn.rnn.recursiveCopy(dec.lstmLayers[i].userPrevCell, enc.lstmLayers[i].cells[seqlen])
+      dec.lstmLayers[i].userPrevOutput = enc.lstmLayers[i].outputs[seqlen]:clone()
+      dec.lstmLayers[i].userPrevCell = enc.lstmLayers[i].cells[seqlen]:clone()
    end
 end
 
@@ -124,8 +126,8 @@ function train(data, valid_data, encoder, decoder, criterion)
 
            -- Encoder forward prop
            local encoderOutput = encoder:forward(input_mb) -- sentlen table of batch_size x rnn_size
+
            -- Decoder forward prop
-           decoder:forget()
            forwardConnect(encoder, decoder)
            local decoderInput = { input[{{sentlen + 1}, { batch_idx + 1, batch_idx + batch_size }}] }
            decoder:remember()
