@@ -134,9 +134,10 @@ function train(data, valid_data, encoder, decoder, criterion)
              table.insert(decoderInput, nextInput:reshape(1,batch_size):clone())
              --storeState(decoder)
              table.insert(decoderOutput, decoder:forward(decoderInput[t])[1]:clone())
+             print(decoderInput)
+             print(decoderOutput)
            end
            decoderInput = nn.JoinTable(1):forward(decoderInput)
-           print(decoderInput:size())
            if opt.gpu > 0 then
              decoderInput = decoderInput:cuda()
            else
