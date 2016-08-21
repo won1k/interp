@@ -125,14 +125,15 @@ function train(data, valid_data, encoder, decoder, criterion)
            -- Encoder forward prop
            local encoderOutput = encoder:forward(input_mb) -- sentlen table of batch_size x rnn_size
            -- Decoder forward prop
+           decoder:forget()
            forwardConnect(encoder, decoder)
            local decoderInput = { input[{{sentlen + 1}, { batch_idx + 1, batch_idx + batch_size }}] }
            decoder:remember()
            local decoderOutput = { decoder:forward(decoderInput[1])[1]:clone() }
            for t = 2, #output_mb do
              local _, nextInput = decoderOutput[t-1]:max(2)
-             table.insert(decoderInput, nextInput:reshape(1,batch_size):zero())
-             --table.insert(decoderInput, nextInput:reshape(1,batch_size):clone())
+             --table.insert(decoderInput, nextInput:reshape(1,batch_size):zero())
+             table.insert(decoderInput, nextInput:reshape(1,batch_size):clone())
              --storeState(decoder)
              table.insert(decoderOutput, decoder:forward(decoderInput[t])[1]:clone())
            end
