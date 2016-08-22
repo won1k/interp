@@ -179,23 +179,21 @@ function train(data, valid_data, encoder, decoder, criterion)
         end
       end
       print('Training error', trainErr / total)
-      --local score = eval(valid_data, model)
-      --local savefile = string.format('%s_epoch%.2f_%.2f.t7',
-      --                               opt.savefile, epoch, score)
-      local savefile = string.format('%s_epoch%.2f.t7', opt.savefile, epoch)
+      local score = eval(valid_data, encoder, decoder)
+      local savefile = string.format('%s_epoch%.2f_%.2f.t7',
+                                     opt.savefile, epoch, score)
       --torch.save(savefile, encoder)
       print('saving checkpoint to ' .. savefile)
 
-      --if score > last_score - .3 then
-      --   opt.learning_rate = opt.learning_rate / 2
-      --end
-      --last_score = score
-      --encoder:forget()
-      --decoder:forget()
+      if score > last_score - .3 then
+         opt.learning_rate = opt.learning_rate / 2
+      end
+      print('Learning rate', opt.learning_rate)
+      last_score = score
    end
 end
 
-function eval(data, model)
+function eval(data, encoder, decoder)
    -- Validation
    model:evaluate()
    local nll = 0
@@ -209,13 +207,27 @@ function eval(data, model)
         sentlen = sentlen + 2 * torch.floor(data.dwin/2)
       end
       output = nn.SplitTable(1):forward(output)
-      out = model:forward(input)
-      nll = nll + criterion:forward(out, output) * nsent
+
+      -- Encoder forward prop
+      local encoderOutput = encoder:forward(input[{{1, sentlen}}]) -- sentlen table of batch_size x rnn_size
+      -- Decoder forward prop
+      forwardConnect(encoder, decoder)
+      local decoderInput = { input[{{sentlen + 1}}] }
+      decoder:remember()
+      local decoderOutput = { decoder:forward(decoderInput[1])[1]:clone() }
+      for t = 2, #output do
+        local _, nextInput = decoderOutput[t-1]:max(2)
+        table.insert(decoderInput, nextInput:reshape(1,nsent):clone())
+        table.insert(decoderOutput, decoder:forward(decoderInput[t])[1]:clone())
+      end
+
+      nll = nll + criterion:forward(decoderOutput, output) * nsent
       total = total + sentlen * nsent
-      model:forget()
+      encoder:forget()
+      decoder:forget()
    end
    local valid = math.exp(nll / total)
-   print("Valid", valid)
+   print("Test error", valid)
    return valid
 end
 
