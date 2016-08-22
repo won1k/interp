@@ -201,6 +201,7 @@ function eval(data, encoder, decoder)
    decoder:evaluate()
    local nll = 0
    local total = 0
+   local accuracy = 0
    for i = 1, data:size() do
       local sentlen = data.lengths[i]
       local d = data[sentlen]
@@ -223,11 +224,25 @@ function eval(data, encoder, decoder)
 
       nll = nll + criterion:forward(decoderOutput, output) * nsent
       total = total + sentlen * nsent
+
+      -- Accuracy
+      local _, nextInput = decoderOutput[#output]:max(2)
+      for t = 1, #output do
+        local _, prediction = decoderOutput[t]:max(2)
+        prediction = prediction:squeeze()
+        for i = 1, nsent do
+          if prediction[i] == output[t][i] then
+            accuracy = accuracy + 1
+          end
+        end
+      end
+
       encoder:forget()
       decoder:forget()
    end
    local valid = math.exp(nll / total)
    print("Test error", valid)
+   print("Test accuracy", accuracy / total)
    return valid
 end
 
