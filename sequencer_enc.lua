@@ -204,9 +204,6 @@ function eval(data, encoder, decoder)
       local d = data[sentlen]
       local input, output = d[1], d[2]
       local nsent = input:size(2)
-      if opt.wide > 0 then
-        sentlen = sentlen + 2 * torch.floor(data.dwin/2)
-      end
       output = nn.SplitTable(1):forward(output)
 
       -- Encoder forward prop
