@@ -150,10 +150,8 @@ function train(data, valid_data, encoder, decoder, criterion)
            decoder:forget()
            forwardConnect(encoder, decoder)
            local allDecoderOutput = decoder:forward(decoderInput)
-           print(decoderInput:size())
-           print(decoderOutput)
-           print(output_mb)
-           decoder:backward(decoderInput, criterion:backward(decoderOutput, output_mb))
+           local grads = criterion:backward(decoderOutput, output_mb)
+           decoder:backward(decoderInput, grads)
            --print("Decoder norm", decGradParams:norm())
 
            -- Encoder backward prop
@@ -182,7 +180,7 @@ function train(data, valid_data, encoder, decoder, criterion)
         end
       end
       print('Training error', trainErr / total)
-      local score = eval(valid_data, encoder, decoder)
+      --local score = eval(valid_data, encoder, decoder)
       local savefile = string.format('%s_epoch%.2f_%.2f.t7',
                                      opt.savefile, epoch, score)
       --torch.save(savefile, encoder)
