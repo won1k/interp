@@ -190,6 +190,8 @@ function train(data, valid_data, encoder, decoder, criterion)
       end
       print('Learning rate', opt.learning_rate)
       last_score = score
+      encoder:forget()
+      decoder:forget()
    end
 end
 
