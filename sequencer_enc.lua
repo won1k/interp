@@ -103,11 +103,11 @@ function train(data, valid_data, encoder, decoder, criterion)
    local decParams, decGradParams = decoder:getParameters()
    encParams:uniform(-opt.param_init, opt.param_init)
    decParams:uniform(-opt.param_init, opt.param_init)
-   encoder:training()
-   decoder:training()
 
    for epoch = 1, opt.epochs do
       print('epoch: ' .. epoch)
+      encoder:training()
+      decoder:training()
       local trainErr = 0
       local total = 0
       for i = 1, data:size() do
@@ -150,8 +150,7 @@ function train(data, valid_data, encoder, decoder, criterion)
            decoder:forget()
            forwardConnect(encoder, decoder)
            local allDecoderOutput = decoder:forward(decoderInput)
-           local grads = criterion:backward(decoderOutput, output_mb)
-           decoder:backward(decoderInput, grads)
+           decoder:backward(decoderInput, criterion:backward(decoderOutput, output_mb))
            --print("Decoder norm", decGradParams:norm())
 
            -- Encoder backward prop
