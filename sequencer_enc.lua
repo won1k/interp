@@ -195,7 +195,8 @@ end
 
 function eval(data, encoder, decoder)
    -- Validation
-   model:evaluate()
+   encoder:evaluate()
+   decoder:evaluate()
    local nll = 0
    local total = 0
    for i = 1, data:size() do
