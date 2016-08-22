@@ -229,7 +229,7 @@ function eval(data, encoder, decoder)
       local _, nextInput = decoderOutput[#output]:max(2)
       for t = 1, #output do
         local _, prediction = decoderOutput[t]:max(2)
-        prediction = prediction:squeeze()
+        prediction = prediction:reshape(nsent)
         for i = 1, nsent do
           if prediction[i] == output[t][i] then
             accuracy = accuracy + 1
