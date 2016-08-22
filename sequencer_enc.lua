@@ -185,10 +185,10 @@ function train(data, valid_data, encoder, decoder, criterion)
       --torch.save(savefile, encoder)
       print('saving checkpoint to ' .. savefile)
 
-      if score > last_score - .3 then
-         opt.learning_rate = opt.learning_rate / 2
-      end
-      print('Learning rate', opt.learning_rate)
+      --if score > last_score - .3 then
+      --   opt.learning_rate = opt.learning_rate / 2
+      --end
+      --print('Learning rate', opt.learning_rate)
       last_score = score
       encoder:forget()
       decoder:forget()
