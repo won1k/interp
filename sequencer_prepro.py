@@ -113,6 +113,7 @@ def get_data(args):
             sentences = {}
             pos_seqs = {}
             chunk_seqs = {}
+            outputs = {}
             sentence = []
             pos_seq = []
             chunk_seq = []
@@ -120,14 +121,17 @@ def get_data(args):
                 if not line.strip():
                     length = len(sentence)
                     target_indexer.max_len = max(target_indexer.max_len, length)
+                    output = [sentence[1:] + [target_indexer.convert("</s>")]]
                     if length in sentences:
                         sentences[length].append(sentence)
                         pos_seqs[length].append(pos_seq)
                         chunk_seqs[length].append(chunk_seq)
+                        outputs[length].append(output)
                     else:
                         sentences[length] = [sentence]
                         pos_seqs[length] = [pos_seq]
                         chunk_seqs[length] = [chunk_seq]
+                        outputs[length] = [output]
                     sentence = []
                     pos_seq = []
                     chunk_seq = []
@@ -150,8 +154,9 @@ def get_data(args):
         f["sent_lens"] = np.array(sent_lens, dtype=int)
         for length in sent_lens:
             f[str(length)] = np.array(sentences[length], dtype=int)
-            f[str(length) + "_pos"] = np.array(pos_seqs[length], dtype = int)
-            f[str(length) + "_chunks"] = np.array(chunk_seqs[length], dtype = int)
+            f[str(length) + "pos"] = np.array(pos_seqs[length], dtype = int)
+            f[str(length) + "chunk"] = np.array(chunk_seqs[length], dtype = int)
+            f[str(length) + "output"] = np.array(outputs[length], dtype = int)
         f["max_len"] = np.array([target_indexer.max_len], dtype=int)
         f["nfeatures"] = np.array([target_indexer.counter - 1], dtype=int)
         f["nclasses_pos"] = np.array([target_indexer.pos_counter - 1], dtype=int)
@@ -162,7 +167,7 @@ def get_data(args):
     target_indexer.lock()
     convert(args.testfile, args.outputfile + "_test" + ".hdf5", args.dwin)
     target_indexer.write(args.outputfile + ".dict")
-    target_indexer.write_chunks(args.outputfile + ".chunks.dict")
+    target_indexer.write_chunks(args.outputfile + ".chunk.dict")
     target_indexer.write_pos(args.outputfile + ".pos.dict")
 
 def main(arguments):

@@ -33,7 +33,6 @@ function data:__init(opt, data_file)
 
    self.lengths = f:read('sent_lens'):all()
    self.max_len = f:read('max_len'):all()[1]
-   self.nclasses = f:read('nclasses_chunk'):all():long()[1]
    self.nfeatures = f:read('nfeatures'):all():long()[1]
    self.length = self.lengths:size(1)
    self.dwin = f:read('dwin'):all():long()[1]
