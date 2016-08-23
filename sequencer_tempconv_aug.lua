@@ -153,7 +153,7 @@ function eval(data, model, criterion)
       local batch_size = math.min(sent_idx * opt.bsize, nsent) - batch_idx
       local input_word_mb = d[1][{{ batch_idx + 1, batch_idx + batch_size }}]:transpose(1,2)
       local input_feature_mb = d[2][{{ batch_idx + 1, batch_idx + batch_size }}]:transpose(1,2)
-      local output_mb = d[3][{{ batch_idx + 1, batch_idx + batch_size }}]
+      local output_mb = d[3][{{ batch_idx + 1, batch_idx + batch_size }}]:reshape(batch_size, sentlen)
       output_mb = nn.SplitTable(2):forward(output_mb)
 
       nll = nll + criterion:forward(model:forward({input_word_mb, input_feature_mb}), output_mb) * batch_size
@@ -175,7 +175,7 @@ function predict(data, model)
     local nsent = d[1]:size(1)
     local input_word = d[1]:transpose(1,2)
     local input_feature = d[2]:transpose(1,2)
-    local output = d[3]
+    local output = d[3]:reshape(nsent, sentlen)
     local test_pred = model:forward({input_word, input_feature})
     local maxidx = {}
     for j = 1, #test_pred do
