@@ -144,7 +144,7 @@ function eval(data, model, criterion)
   model:evaluate()
   local nll = 0
   local total = 0
-  for i = 1, data.nlengths do
+  for i = 1, data.length do
     local sentlen = data.lengths[i]
     local d = data[sentlen]
     local nsent = d[1]:size(1)
@@ -169,7 +169,7 @@ function predict(data, model)
   local output = hdf5.open(opt.testoutfile, 'w')
   local accuracy = 0
   local total = 0
-  for i = 1, data.nlengths do
+  for i = 1, data.length do
     local sentlen = data.lengths[i]
     local d = data[sentlen]
     local nsent = d[1]:size(1)
