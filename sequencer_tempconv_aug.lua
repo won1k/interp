@@ -79,7 +79,7 @@ function make_model(train_data)
   model:add(nn.JoinTable(3)) -- sentlen x batch_size x (dword + dfeature)
   model:add(nn.SplitTable(1,3)) -- sentlen table of batch_size x (dword + dfeature)
   local nnlm = nn.Sequential()
-  nnlm:add(nn.Linear(opt.dword + opt.feature, opt.dhid)) -- sentlen table of batch_size x dhid
+  nnlm:add(nn.Linear(opt.dword + opt.dfeature, opt.dhid)) -- sentlen table of batch_size x dhid
   nnlm:add(nn.HardTanh())
   nnlm:add(nn.Linear(opt.dhid, train_data.nfeatures_word)) -- sentlen table of batch_size x nfeatures
   nnlm:add(nn.LogSoftMax())
