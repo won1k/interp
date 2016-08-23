@@ -116,10 +116,10 @@ function train(train_data, test_data, model, criterion)
         local input_mb = {input_word_mb, input_feature_mb}
         local output_mb = d[3][{{ batch_idx + 1, batch_idx + batch_size }}]
         output_mb = nn.SplitTable(2):forward(output_mb)
-        print(output_mb)
 
         criterion:forward(model:forward(input_mb), output_mb)
         model:zeroGradParameters()
+        print(model.output)
         model:backward(input_mb, criterion:backward(model.output, output_mb))
         model:updateParameters(opt.learning_rate)
       end
