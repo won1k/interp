@@ -113,12 +113,14 @@ function train(train_data, test_data, model, criterion)
         local batch_size = math.min(sent_idx * opt.bsize, nsent) - batch_idx
         local input_word_mb = d[1][{{ batch_idx + 1, batch_idx + batch_size }}]:transpose(1,2)
         local input_feature_mb = d[2][{{ batch_idx + 1, batch_idx + batch_size }}]:transpose(1,2)
+        local input_mb = {input_word_mb, input_feature_mb}
         local output_mb = d[3][{{ batch_idx + 1, batch_idx + batch_size }}]
         output_mb = nn.SplitTable(2):forward(output_mb)
+        print(output_mb)
 
-        criterion:forward(model:forward{input_word_mb, input_feature_mb}, output_mb)
+        criterion:forward(model:forward(input_mb), output_mb)
         model:zeroGradParameters()
-        model:backward({input_word_mb, input_feature_mb}, criterion:backward(model.output, output_mb))
+        model:backward(input_mb, criterion:backward(model.output, output_mb))
         model:updateParameters(opt.learning_rate)
       end
     end
