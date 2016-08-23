@@ -103,7 +103,7 @@ function train(train_data, test_data, model, criterion)
   for t = 1, opt.epochs do
     model:training()
     print("Training epoch", t)
-    for i = 1, train_data.nlengths do
+    for i = 1, train_data.length do
       local sentlen = train_data.lengths[i]
       print(sentlen)
       local d = train_data[sentlen] -- {input_word, input_feature, output}
