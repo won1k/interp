@@ -115,9 +115,9 @@ function train(train_data, test_data, model, criterion)
         local input_feature_mb = d[2][{{ batch_idx + 1, batch_idx + batch_size }}]:transpose(1,2)
         local input_mb = {input_word_mb, input_feature_mb}
         local output_mb = d[3][{{ batch_idx + 1, batch_idx + batch_size }}]
+        print(output_mb:size())
         output_mb = nn.SplitTable(2):forward(output_mb)
 
-        print(model:forward(input_mb))
         criterion:forward(model:forward(input_mb), output_mb)
         model:zeroGradParameters()
         model:backward(input_mb, criterion:backward(model.output, output_mb))
