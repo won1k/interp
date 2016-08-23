@@ -25,7 +25,7 @@ opt = cmd:parse(arg)
 
 -- Construct the data set.
 local data = torch.class("data")
-function data:__init(opt, data_file)
+function data:__init(data_file)
    local f = hdf5.open(data_file, 'r')
    self.input_word = {}
    self.input_feature = {}
@@ -68,7 +68,7 @@ function data.__index(self, idx)
    return {input_word, input_feature, output}
 end
 
-function make_model(train_data, opt)
+function make_model(train_data)
   local model = nn.Sequential() -- input: {sentlen x batch_size, sentlen x batch_size}
   local wordLT = nn.LookupTable(train_data.nfeatures_word, opt.dword) -- sentlen x batch_size x dim
   local featureLT = nn.LookupTable(train_data.nfeatures_feature, opt.dfeature)
@@ -202,11 +202,11 @@ function main()
     end
 
     -- Load training data
-    local train_data = data.new(opt, opt.datafile)
-    local test_data = data.new(opt, opt.testfile)
+    local train_data = data.new(opt.datafile)
+    local test_data = data.new(opt.testfile)
 
     -- Create model
-    local model, criterion = make_model(train_data, opt)
+    local model, criterion = make_model(train_data)
 
     -- Train.
     train(train_data, test_data, model, criterion)
