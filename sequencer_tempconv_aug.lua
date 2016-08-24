@@ -182,6 +182,7 @@ function predict(data, model)
       _, maxidx[j] = test_pred[j]:max(2)
     end
     maxidx = nn.JoinTable(2):forward(maxidx)
+    print(maxidx:size())
     output:write(tostring(sentlen), maxidx:long())
     output:write(tostring(sentlen) .. '_target', test_output:long())
     accuracy = accuracy + torch.eq(maxidx:long(), test_output:long()):sum()
