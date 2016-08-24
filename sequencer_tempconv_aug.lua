@@ -8,7 +8,7 @@ cmd = torch.CmdLine()
 cmd:option('-datafile','convert_seq/data.hdf5','data directory. Should contain data.hdf5 with input data')
 cmd:option('-testfile','convert_seq/data_test.hdf5','data directory. Should contain data.hdf5 with input data')
 cmd:option('-savefile', 'checkpoint_seq/lm','filename to autosave the checkpoint to')
-cmd:option('-wide', 1, '1 if wide convolution (padded), 0 otherwise')
+cmd:option('-testoutfile', 'lm_results.hdf5', 'filename to save results to')
 cmd:option('-gpu', 1, 'which gpu to use. -1 = use CPU')
 cmd:option('-feature', 'chunk', 'which feature to use (chunk/pos)')
 -- Hyperparameters
