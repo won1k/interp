@@ -155,16 +155,17 @@ function train(train_data, test_data, model, criterion)
     last_score = score
 
     print(t, score, opt.learning_rate)
-  end
-  t = t + 1
-  -- Convergence condition
-  if opt.epochs > 0 then
-    if t > opt.epochs then
-      stop = true
-    end
-  else
-    if opt.learning_rate < 1e-9 then
-      stop = true
+    
+    t = t + 1
+    -- Convergence condition
+    if opt.epochs > 0 then
+      if t > opt.epochs then
+        stop = true
+      end
+    else
+      if opt.learning_rate < 1e-9 then
+        stop = true
+      end
     end
   end
 end
