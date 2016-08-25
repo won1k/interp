@@ -201,10 +201,10 @@ function predict(data, model)
       local input_word = d[1]:transpose(1,2)
       local input_feature = d[2]:transpose(1,2)
       input = {input_word, input_feature}
-      output = d[3]:reshape(batch_size, sentlen)
+      output = d[3]:reshape(nsent, sentlen)
     else
       input = d[1]:transpose(1,2)
-      output = d[2]:reshape(batch_size, sentlen)
+      output = d[2]:reshape(nsent, sentlen)
     end
     local test_pred = model:forward(input)
     local maxidx = {}
