@@ -15,7 +15,7 @@ cmd:option('-feature', 'chunk', 'which feature to use (chunk/pos/none)')
 cmd:option('-dword', 50, 'dimensionality of word embeddings')
 cmd:option('-dfeature', 5, 'dimensionality of feature embeddings')
 cmd:option('-dhid', 300, 'dimensionality of hidden layer')
-cmd:option('-epochs', 30, 'number of training epoch')
+cmd:option('-epochs', 30, 'number of training epochs (use 0 if until convergence, i.e. low lambda)')
 cmd:option('-learning_rate', 1, 'learning rate')
 cmd:option('-bsize', 32, 'batch size')
 cmd:option('-max_grad_norm', 5, 'max l2-norm of concatenation of all gradParam tensors')
@@ -110,7 +110,9 @@ function train(train_data, test_data, model, criterion)
   local last_score = 1e9
   local params, gradParams = model:getParameters()
   params:uniform(-opt.param_init, opt.param_init)
-  for t = 1, opt.epochs do
+  local stop = false
+  local t = 1
+  while not stop do
     model:training()
     print("Training epoch", t)
     for i = 1, train_data.length do
@@ -147,12 +149,23 @@ function train(train_data, test_data, model, criterion)
       print('saving checkpoint to ' .. savefile)
     end
 
-    if score > last_score - .001 then
+    if score > last_score - .01 then
        opt.learning_rate = opt.learning_rate / 2
     end
     last_score = score
 
     print(t, score, opt.learning_rate)
+  end
+  t = t + 1
+  -- Convergence condition
+  if opt.epochs > 0 then
+    if t > opt.epochs then
+      stop = true
+    end
+  else
+    if opt.learning_rate < 1e-9 then
+      stop = true
+    end
   end
 end
 
