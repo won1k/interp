@@ -197,6 +197,11 @@ end
 function main()
     -- parse input params
    opt = cmd:parse(arg)
+   if opt.gpu > 0 then
+     print('using CUDA on GPU ' .. opt.gpu .. '...')
+     require 'cutorch'
+     require 'cunn'
+   end
 
    -- Create the data loader class.
    local train_data = data.new(opt, opt.data_file)
@@ -204,9 +209,6 @@ function main()
    model, criterion = make_model(train_data)
 
    if opt.gpu >= 0 then
-      print('using CUDA on GPU ' .. opt.gpu .. '...')
-      require 'cutorch'
-      require 'cunn'
       model:cuda()
       criterion:cuda()
    end
