@@ -59,7 +59,11 @@ function data.__index(self, idx)
       return data[idx]
    else
       input = self.input[idx]:transpose(1,2)
-      output = self.output[idx]:squeeze():transpose(1,2)
+      if idx > 1 then
+        output = self.output[idx]:squeeze():transpose(1,2)
+      else
+        output = self.output[idx]:transpose(1,2)
+      end
    end
    return {input, output}
 end
