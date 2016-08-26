@@ -58,7 +58,7 @@ function data.__index(self, idx)
    if type(idx) == "string" then
       return data[idx]
    else
-      input = self.input[idx]:transpose(1, 2)
+      input = self.input[idx]:transpose(1,2)
       output = self.output[idx]:transpose(1,2)
    end
    return {input, output}
@@ -78,6 +78,8 @@ function train(data, valid_data, model, criterion)
          local d = data[sentlen]
          local input, output = d[1], d[2]
          local nsent = input:size(2) -- sentlen x nsent input
+         print(d[1]:size())
+         print(d[2]:size())
          -- If wide convolution, add length for padding
          if opt.wide > 0 then
            sentlen = sentlen + 2 * torch.floor(data.dwin/2)
