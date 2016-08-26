@@ -76,6 +76,7 @@ function train(data, valid_data, model, criterion)
          local sentlen = data.lengths[i]
          print(sentlen)
          local d = data[sentlen]
+         print(d[2]:size())
          local input, output = d[1], d[2]
          local nsent = input:size(2) -- sentlen x nsent input
          -- If wide convolution, add length for padding
