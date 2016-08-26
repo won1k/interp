@@ -176,7 +176,7 @@ function make_model(train_data)
    else
      model:add(nn.LookupTable(train_data.nfeatures_word, opt.dword))
    end
-   model:add(nn.SplitTable(1, 3))
+   model:add(nn.SplitTable(1, 3)) -- batch table of sentlen x (dword + dfeature)
 
    if opt.feature ~= 'none' then
      model:add(nn.Sequencer(nn.FastLSTM(opt.dword + opt.dfeature, opt.dhid)))

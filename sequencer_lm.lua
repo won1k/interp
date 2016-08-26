@@ -40,7 +40,7 @@ function data:__init(opt, data_file)
    for i = 1, self.length do
      local len = self.lengths[i]
      self.input[len] = f:read(tostring(len)):all():double()
-     self.output[len] = f:read(tostring(len) .. "_output"):all():double()
+     self.output[len] = f:read(tostring(len) .. "output"):all():double()
      if opt.gpu > 0 then
        self.input[len] = self.input[len]:cuda()
        self.output[len] = self.output[len]:cuda()
