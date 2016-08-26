@@ -8,7 +8,7 @@ cmd:option('-data_file','convert_seq/data.hdf5','data directory. Should contain 
 cmd:option('-val_data_file','convert_seq/data_test.hdf5','data directory. Should contain data.hdf5 with input data')
 cmd:option('-savefile', 'checkpoint_seq/lm','filename to autosave the checkpoint to')
 cmd:option('-gpu', 1, 'which gpu to use. 0 = use CPU')
-cmd:option('-feature', 'chunks', 'which feature to use (none for no feature)')
+cmd:option('-feature', 'chunk', 'which feature to use (none for no feature)')
 
 cmd:option('-dhid', 650, 'size of LSTM internal state')
 cmd:option('-dword', 650, 'dimensionality of word embeddings')
