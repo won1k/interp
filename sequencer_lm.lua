@@ -155,14 +155,14 @@ function make_model(train_data)
    model:add(nn.LookupTable(train_data.nfeatures, opt.word_vec_size))
    model:add(nn.SplitTable(1, 3))
 
-   model:add(nn.Sequencer(nn.FastLSTM(opt.rnn_size, opt.rnn_size)))
+   model:add(nn.Sequencer(nn.FastLSTM(opt.word_vec_size, opt.rnn_size)))
    for j = 2, opt.num_layers do
-      model:add(nn.Sequencer(nn.Dropout(opt.dropoutProb)))
+      model:add(nn.Sequencer(nn.Dropout(opt.dropout_prob)))
       model:add(nn.Sequencer(nn.FastLSTM(opt.rnn_size, opt.rnn_size)))
    end
 
-   model:add(nn.Sequencer(nn.Dropout(opt.dropoutProb)))
-   model:add(nn.Sequencer(nn.Linear(opt.rnn_size, train_data.nclasses)))
+   model:add(nn.Sequencer(nn.Dropout(opt.dropout_prob)))
+   model:add(nn.Sequencer(nn.Linear(opt.rnn_size, train_data.nfeatures)))
    model:add(nn.Sequencer(nn.LogSoftMax()))
 
    model:remember('both')
