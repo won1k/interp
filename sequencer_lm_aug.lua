@@ -169,16 +169,21 @@ function make_model(train_data)
 
    if opt.feature ~= 'none' then
      model:add(nn.ParallelTable()
-      :add(nn.LookupTable(train_data.nfeatures_word, opt.dword))
-      :add(nn.LookupTable(train_data.nfeatures_feature, opt.dfeature))
+      :add(nn.LookupTable(train_data.nfeatures_word, opt.dword)) -- batch x sentlen x dword
+      :add(nn.LookupTable(train_data.nfeatures_feature, opt.dfeature)) -- batch x sentlen x dfeature
      )
-     model:add(nn.JoinTable(3))
+     model:add(nn.JoinTable(3)) -- batch x sentlen x (dword + dfeature)
    else
      model:add(nn.LookupTable(train_data.nfeatures_word, opt.dword))
    end
    model:add(nn.SplitTable(1, 3))
 
-   model:add(nn.Sequencer(nn.FastLSTM(opt.dhid, opt.dhid)))
+   if opt.feature ~= 'none' then
+     model:add(nn.Sequencer(nn.FastLSTM(opt.dword + opt.dfeature, opt.dhid)))
+   else
+     model:add(nn.Sequencer(nn.FastLSTM(opt.dword, opt.dhid)))
+   end
+
    for j = 2, opt.num_layers do
       model:add(nn.Sequencer(nn.Dropout(opt.dropout_prob)))
       model:add(nn.Sequencer(nn.FastLSTM(opt.dhid, opt.dhid)))
