@@ -4,6 +4,12 @@ require 'nngraph'
 
 cmd = torch.CmdLine()
 
+cmd:option('-data_file','convert_seq/data.hdf5','data directory. Should contain data.hdf5 with input data')
+cmd:option('-val_data_file','convert_seq/data_test.hdf5','data directory. Should contain data.hdf5 with input data')
+cmd:option('-gpu',1,'which gpu to use. -1 = use CPU')
+cmd:option('-param_init', 0.05, 'initialize parameters at')
+cmd:option('-savefile', 'checkpoint_seq/lm','filename to autosave the checkpoint to')
+
 cmd:option('-rnn_size', 650, 'size of LSTM internal state')
 cmd:option('-word_vec_size', 650, 'dimensionality of word embeddings')
 cmd:option('-num_layers', 2, 'number of layers in the LSTM')
@@ -14,12 +20,6 @@ cmd:option('-seqlen', 20, 'sequence length')
 cmd:option('-max_grad_norm', 5, 'max l2-norm of concatenation of all gradParam tensors')
 cmd:option('-dropoutProb', 0.5, 'dropoff param')
 cmd:option('-wide', 1, '1 if wide convolution (padded), 0 otherwise')
-
-cmd:option('-data_file','convert_seq/data.hdf5','data directory. Should contain data.hdf5 with input data')
-cmd:option('-val_data_file','convert_seq/data_test.hdf5','data directory. Should contain data.hdf5 with input data')
-cmd:option('-gpu',1,'which gpu to use. -1 = use CPU')
-cmd:option('-param_init', 0.05, 'initialize parameters at')
-cmd:option('-savefile', 'checkpoint_seq/lm','filename to autosave the checkpoint to')
 
 opt = cmd:parse(arg)
 
@@ -40,7 +40,7 @@ function data:__init(opt, data_file)
    for i = 1, self.length do
      local len = self.lengths[i]
      self.input[len] = f:read(tostring(len)):all():double()
-     self.output[len] = f:read(tostring(len) .. "_chunks"):all():double()
+     self.output[len] = f:read(tostring(len) .. "_output"):all():double()
      if opt.gpu > 0 then
        self.input[len] = self.input[len]:cuda()
        self.output[len] = self.output[len]:cuda()

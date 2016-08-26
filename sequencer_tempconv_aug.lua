@@ -115,6 +115,17 @@ function train(train_data, test_data, model, criterion)
   while not stop do
     model:training()
     print("Training epoch", t)
+    -- Convergence condition
+    if opt.epochs > 0 then
+      if t >= opt.epochs then
+        stop = true
+      end
+    else
+      if opt.learning_rate < 1e-9 then
+        stop = true
+      end
+    end
+
     for i = 1, train_data.length do
       local sentlen = train_data.lengths[i]
       print(sentlen)
@@ -140,11 +151,12 @@ function train(train_data, test_data, model, criterion)
         model:backward(input_mb, criterion:backward(model.output, output_mb))
         model:updateParameters(opt.learning_rate)
       end
+      model:forget()
     end
     -- Validation error at epoch
     local score = eval(test_data, model, criterion)
     local savefile = string.format('%s_epoch%.2f_%.2f.t7', opt.savefile, t, score)
-    if t == opt.epochs then
+    if stop then
       torch.save(savefile, model)
       print('saving checkpoint to ' .. savefile)
     end
@@ -155,18 +167,7 @@ function train(train_data, test_data, model, criterion)
     last_score = score
 
     print(t, score, opt.learning_rate)
-    
     t = t + 1
-    -- Convergence condition
-    if opt.epochs > 0 then
-      if t > opt.epochs then
-        stop = true
-      end
-    else
-      if opt.learning_rate < 1e-9 then
-        stop = true
-      end
-    end
   end
 end
 
