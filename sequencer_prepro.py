@@ -121,7 +121,7 @@ def get_data(args):
                 if not line.strip():
                     length = len(sentence)
                     target_indexer.max_len = max(target_indexer.max_len, length)
-                    output = [sentence[1:] + [target_indexer.convert("</s>")]]
+                    output = sentence[1:] + [target_indexer.convert("</s>")]
                     if length in sentences:
                         sentences[length].append(sentence)
                         pos_seqs[length].append(pos_seq)
