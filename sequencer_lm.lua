@@ -93,7 +93,7 @@ function train(data, valid_data, model, criterion)
                { batch_idx + 1, batch_idx + batch_size }}] -- sequence_len x batch_size tensor
              local output_mb = output[{
                { seq_idx + 1, seq_idx + sequence_len },
-               { batch_idx + 1, batch_idx + batch_size }}]:reshape(sequence_len, batch_idx)
+               { batch_idx + 1, batch_idx + batch_size }}]:reshape(sequence_len, batch_size)
              output_mb = nn.SplitTable(1):forward(output_mb) -- sequence_len table of batch_size
 
              criterion:forward(model:forward(input_mb), output_mb)
