@@ -142,8 +142,8 @@ function eval(data, model)
    local total = 0
    for i = 1, data:size() do
       local sentlen = data.lengths[i]
-      local nsent = d[1]:size(1)
       local d = data[sentlen]
+      local nsent = d[1]:size(1)
       local input, output
       if opt.feature ~= 'none' then
         local input_word = d[1]:transpose(1,2)
