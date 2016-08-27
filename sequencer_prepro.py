@@ -96,7 +96,7 @@ def get_data(args):
                 print >>out, ' '.join([idx_to_word[word] for word in sentence])
         out.close()
 
-    def add_padding(sentences, pos_seqs, chunk_seqs, sent_lens, dwin):
+    def add_padding(sentences, pos_seqs, chunk_seqs, outputs, sent_lens, dwin):
         for length in sent_lens:
             for idx, sentence in enumerate(sentences[length]):
                 sentences[length][idx] = [target_indexer.convert('PAD')] * (dwin/2) + \
@@ -105,7 +105,9 @@ def get_data(args):
                     pos_seqs[length][idx] + [target_indexer.convert_pos('PAD')] * (dwin/2)
                 chunk_seqs[length][idx] = [target_indexer.convert_chunk('PAD')] * (dwin/2) + \
                     chunk_seqs[length][idx] + [target_indexer.convert_chunk('PAD')] * (dwin/2)
-        return sentences, pos_seqs, chunk_seqs
+                outputs[length][idx] = [target_indexer.convert('PAD')] * (dwin/2) + \
+                    outputs[length][idx] + [target_indexer.convert('PAD')] * (dwin/2)
+        return sentences, pos_seqs, chunk_seqs, outputs
 
     def convert(datafile, outfile, dwin):
         # Parse and convert data
@@ -147,7 +149,7 @@ def get_data(args):
 
         # Add padding for windowed models
         if dwin > 0:
-            sentences, pos_seqs, chunk_seqs = add_padding(sentences, pos_seqs, chunk_seqs, sent_lens, dwin)
+            sentences, pos_seqs, chunk_seqs, outputs = add_padding(sentences, pos_seqs, chunk_seqs, sent_lens, dwin)
 
         # Output HDF5 for torch
         f = h5py.File(outfile, "w")
