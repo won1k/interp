@@ -114,7 +114,7 @@ function train(data, valid_data, model, criterion)
       local savefile = string.format('%s_epoch%.2f_%.2f.t7',
                                      opt.savefile, epoch, score)
       --local savefile = string.format('%s_epoch%.2f.t7', opt.savefile, epoch)
-      if t == opt.epochs then
+      if epoch == opt.epochs then
         torch.save(savefile, model)
         print('saving checkpoint to ' .. savefile)
       end
@@ -124,7 +124,7 @@ function train(data, valid_data, model, criterion)
       end
       last_score = score
 
-      print(t, score, learning_rate)
+      print(epoch, score, opt.learning_rate)
    end
 end
 

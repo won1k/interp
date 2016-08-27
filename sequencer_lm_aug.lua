@@ -122,7 +122,7 @@ function train(data, valid_data, model, criterion)
       local savefile = string.format('%s_epoch%.2f_%.2f.t7',
                                      opt.savefile, epoch, score)
       --local savefile = string.format('%s_epoch%.2f.t7', opt.savefile, epoch)
-      if t == opt.epochs then
+      if epoch == opt.epochs then
         torch.save(savefile, model)
         print('saving checkpoint to ' .. savefile)
       end
@@ -131,6 +131,8 @@ function train(data, valid_data, model, criterion)
          opt.learning_rate = opt.learning_rate / 2
       end
       last_score = score
+
+      print(epoch, score, opt.learning_rate)
    end
 end
 
@@ -148,19 +150,18 @@ function eval(data, model)
         local input_word = d[1]:transpose(1,2)
         local input_feature = d[2]:transpose(1,2)
         input = {input_word, input_feature}
-        output = d[3]:transpose(1,2)
+        output = d[3]
       else
         input = d[1]:transpose(1,2)
-        output = d[2]:transpose(1,2)
+        output = d[2]
       end
-      output = nn.SplitTable(1):forward(output)
+      output = nn.SplitTable(2):forward(output)
       out = model:forward(input)
       nll = nll + criterion:forward(out, output) * nsent
       total = total + sentlen * nsent
       model:forget()
    end
    local valid = math.exp(nll / total)
-   print("Valid", valid)
    return valid
 end
 
