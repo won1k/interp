@@ -77,7 +77,6 @@ function data.__index(self, idx)
    end
 end
 
-
 function train(data, valid_data, model, criterion)
    local last_score = 1e9
    local params, grad_params = model:getParameters()
@@ -99,6 +98,7 @@ function train(data, valid_data, model, criterion)
             local input_word_mb = d[1][{{ batch_idx + 1, batch_idx + batch_size }}]:transpose(1,2)
             local input_feature_mb = d[2][{{ batch_idx + 1, batch_idx + batch_size }}]:transpose(1,2)
             input_mb = {input_word_mb, input_feature_mb}
+            print(input_mb)
             output_mb = d[3][{{ batch_idx + 1, batch_idx + batch_size }}]:reshape(batch_size, sentlen)
           else
             input_mb = d[1][{{ batch_idx + 1, batch_idx + batch_size }}]:transpose(1,2)
