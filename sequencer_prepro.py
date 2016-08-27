@@ -149,7 +149,7 @@ def get_data(args):
 
         # Add padding for windowed models
         if dwin > 0:
-            sentences, pos_seqs, chunk_seqs, outputs = add_padding(sentences, pos_seqs, chunk_seqs, sent_lens, dwin)
+            sentences, pos_seqs, chunk_seqs, outputs = add_padding(sentences, pos_seqs, chunk_seqs, outputs, sent_lens, dwin)
 
         # Output HDF5 for torch
         f = h5py.File(outfile, "w")
