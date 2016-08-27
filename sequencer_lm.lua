@@ -76,7 +76,6 @@ function train(data, valid_data, model, criterion)
          local sentlen = data.lengths[i]
          print(sentlen)
          local d = data[sentlen]
-         print(d[2]:size())
          local input, output = d[1], d[2]
          local nsent = input:size(2) -- sentlen x nsent input
          -- If wide convolution, add length for padding
@@ -115,13 +114,17 @@ function train(data, valid_data, model, criterion)
       local savefile = string.format('%s_epoch%.2f_%.2f.t7',
                                      opt.savefile, epoch, score)
       --local savefile = string.format('%s_epoch%.2f.t7', opt.savefile, epoch)
-      torch.save(savefile, model)
-      print('saving checkpoint to ' .. savefile)
+      if t == opt.epochs then
+        torch.save(savefile, model)
+        print('saving checkpoint to ' .. savefile)
+      end
 
       if score > last_score - .3 then
          opt.learning_rate = opt.learning_rate / 2
       end
       last_score = score
+
+      print(t, score, learning_rate)
    end
 end
 
@@ -145,7 +148,6 @@ function eval(data, model)
       model:forget()
    end
    local valid = math.exp(nll / total)
-   print("Valid", valid)
    return valid
 end
 
