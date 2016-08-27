@@ -9,6 +9,7 @@ cmd:option('-val_data_file','convert_seq/data_test.hdf5','data directory. Should
 cmd:option('-savefile', 'checkpoint_seq/lm','filename to autosave the checkpoint to')
 cmd:option('-gpu', 1, 'which gpu to use. 0 = use CPU')
 cmd:option('-feature', 'chunk', 'which feature to use (none for no feature)')
+cmd:option('-wide', 1, '1 if wide convolution (padded), 0 otherwise')
 
 cmd:option('-dhid', 650, 'size of LSTM internal state')
 cmd:option('-dword', 650, 'dimensionality of word embeddings')
@@ -98,10 +99,10 @@ function train(data, valid_data, model, criterion)
             local input_word_mb = d[1][{{ batch_idx + 1, batch_idx + batch_size }}]:transpose(1,2)
             local input_feature_mb = d[2][{{ batch_idx + 1, batch_idx + batch_size }}]:transpose(1,2)
             input_mb = {input_word_mb, input_feature_mb}
-            output_mb = d[3][{{ batch_idx + 1, batch_idx + batch_size }}]:reshape(batch_size, sentlen)
+            output_mb = d[3][{{ batch_idx + 1, batch_idx + batch_size }}]
           else
             input_mb = d[1][{{ batch_idx + 1, batch_idx + batch_size }}]:transpose(1,2)
-            output_mb = d[2][{{ batch_idx + 1, batch_idx + batch_size }}]:reshape(batch_size, sentlen)
+            output_mb = d[2][{{ batch_idx + 1, batch_idx + batch_size }}]
           end
           output_mb = nn.SplitTable(2):forward(output_mb)
 
@@ -142,6 +143,10 @@ function eval(data, model)
    local total = 0
    for i = 1, data:size() do
       local sentlen = data.lengths[i]
+      local paddedlen = sentlen
+      if opt.wide > 0 then
+        paddedlen = sentlen + 2 * torch.floor(data.dwin/2)
+      end
       local d = data[sentlen]
       local nsent = d[1]:size(1)
       local input, output
@@ -157,7 +162,7 @@ function eval(data, model)
       output = nn.SplitTable(2):forward(output)
       out = model:forward(input)
       nll = nll + criterion:forward(out, output) * nsent
-      total = total + sentlen * nsent
+      total = total + paddedlen * nsent
       model:forget()
    end
    local valid = math.exp(nll / total)
