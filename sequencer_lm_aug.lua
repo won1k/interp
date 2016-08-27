@@ -98,7 +98,6 @@ function train(data, valid_data, model, criterion)
             local input_word_mb = d[1][{{ batch_idx + 1, batch_idx + batch_size }}]:transpose(1,2)
             local input_feature_mb = d[2][{{ batch_idx + 1, batch_idx + batch_size }}]:transpose(1,2)
             input_mb = {input_word_mb, input_feature_mb}
-            print(input_mb)
             output_mb = d[3][{{ batch_idx + 1, batch_idx + batch_size }}]:reshape(batch_size, sentlen)
           else
             input_mb = d[1][{{ batch_idx + 1, batch_idx + batch_size }}]:transpose(1,2)
@@ -115,8 +114,8 @@ function train(data, valid_data, model, criterion)
              grad_params:mul(opt.max_grad_norm / grad_norm)
           end
           params:add(grad_params:mul(-opt.learning_rate))
+          model:forget()
         end
-        model:forget()
       end
       local score = eval(valid_data, model)
       local savefile = string.format('%s_epoch%.2f_%.2f.t7',
