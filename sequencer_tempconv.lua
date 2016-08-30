@@ -1,6 +1,7 @@
 -- torch.setheaptracking(true)
 require 'hdf5';
 require 'rnn';
+require 'train.lua';
 
 cmd = torch.CmdLine()
 
@@ -15,6 +16,7 @@ cmd:option('-gpu', 0, 'whether to use gpu')
 cmd:option('-wide', 1, '1 if wide convolution (padded), 0 otherwise')
 cmd:option('-conv', 1, '1 if CNN, 0 if feed-forward NN (linear)')
 cmd:option('-task', 'chunks', 'chunks or pos')
+cmd:option('-adapt', 'rms', 'rmsprop (rms), adagrad, adadelta, or none')
 
 -- Hyperparameters
 cmd:option('-learning_rate', 0.01, 'learning rate')
@@ -115,88 +117,6 @@ function make_model(train_data) -- batch_size x sentlen x state_dim tensor input
   end
 
   return model, criterion
-end
-
-function train(train_data, test_data, model, criterion)
-  local last_score = 1e9
-  local params, gradParams = model:getParameters()
-  params:uniform(-opt.param_init, opt.param_init)
-  for t = 1, opt.epochs do
-    model:training()
-    print("Training epoch: " .. t)
-    -- Assuming data is in format data[sentlen] = { nsent x sentlen x state_dim tensor, nsent x sentlen tensor }
-    for i = 1, train_data.nlengths do
-      local sentlen = train_data.lengths[i]
-      local paddedlen = sentlen
-      if opt.wide > 0 then
-        paddedlen = sentlen + 2 * torch.floor(opt.dwin/2)
-      end
-      if paddedlen >= opt.dwin then
-        print(sentlen)
-        local d = train_data[sentlen]
-        local nsent = d[1]:size(1)
-        for sent_idx = 1, torch.ceil(nsent / opt.bsize) do
-          local batch_idx = (sent_idx - 1) * opt.bsize
-          local batch_size = math.min(sent_idx * opt.bsize, nsent) - batch_idx
-          local train_input_mb = d[1][{{ batch_idx + 1, batch_idx + batch_size }}] -- batch_size x sequence_len x state_dim tensor
-          local train_output_mb = d[2][{
-            { batch_idx + 1, batch_idx + batch_size },
-            { torch.floor(opt.dwin/2) + 1, torch.floor(opt.dwin/2) + sentlen }}]
-          train_output_mb = nn.SplitTable(2):forward(train_output_mb) -- (sequence_len - 4) table of batch_size
-
-          criterion:forward(model:forward(train_input_mb), train_output_mb)
-          model:zeroGradParameters()
-          model:backward(train_input_mb, criterion:backward(model.output, train_output_mb))
-          model:updateParameters(opt.learning_rate)
-        end
-      end
-    end
-    -- Validation error at epoch
-    local score = eval(test_data, model, criterion)
-    local savefile = string.format('%s_epoch%.2f_%.2f.t7', opt.savefile, t, score)
-    if t == opt.epochs then
-      torch.save(savefile, model)
-      print('saving checkpoint to ' .. savefile)
-    end
-
-    if score > last_score - .01 then
-       opt.learning_rate = opt.learning_rate / 2
-    end
-    last_score = score
-    print(t, score, opt.learning_rate)
-  end
-end
-
-function eval(data, model, criterion)
-  model:evaluate()
-  local nll = 0
-  local total = 0
-  for i = 1, data.nlengths do
-    local sentlen = data.lengths[i]
-    local d = data[sentlen]
-    local nsent = d[1]:size(1)
-    local start = opt.dwin
-    if opt.wide > 0 then
-      start = 0
-    end
-    for sent_idx = 1, torch.ceil(nsent / opt.bsize) do
-      if sentlen > start then
-        local batch_idx = (sent_idx - 1) * opt.bsize
-        local batch_size = math.min(sent_idx * opt.bsize, nsent) - batch_idx
-        local test_input_mb = d[1][{{ batch_idx + 1, batch_idx + batch_size }}]
-        local test_output_mb = d[2][{
-          { batch_idx + 1, batch_idx + batch_size },
-          { torch.floor(opt.dwin/2) + 1, torch.floor(opt.dwin/2) + sentlen }}]
-        test_output_mb = nn.SplitTable(2):forward(test_output_mb)
-
-        nll = nll + criterion:forward(model:forward(test_input_mb), test_output_mb) * batch_size
-        total = total + sentlen * batch_size
-      end
-    end
-    model:forget()
-  end
-  local valid = math.exp(nll / total)
-  return valid
 end
 
 function predict(data, model)
