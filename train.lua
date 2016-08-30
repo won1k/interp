@@ -29,9 +29,15 @@ function train(train_data, test_data, model, criterion)
   local last_score = 1e9
   local t = 1
   local params, gradParams = model:getParameters()
+  -- Initialize tensors
   local gradDenom = torch.ones(gradParams:size())
   local gradPrevDenom = torch.zeros(gradParams:size())
   local prevGrad = torch.zeros(gradParams:size())
+  if opt.gpu > 0 then
+    gradDenom = gradDenom:cuda()
+    gradPrevDenom = gradPrevDenom:cuda()
+    prevGrad = prevGrad:cuda()
+  end
   params:uniform(-opt.param_init, opt.param_init)
   while not stop do
     model:training()
