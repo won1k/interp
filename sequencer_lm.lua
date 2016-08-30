@@ -72,7 +72,7 @@ function train(data, valid_data, model, criterion)
    for epoch = 1, opt.epochs do
       model:training()
       print('epoch: ' .. epoch)
-      for i = 1, data:size() do
+      for i = 1, data:size() do 
          local sentlen = data.lengths[i]
          print(sentlen)
          local d = data[sentlen]

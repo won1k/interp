@@ -31,7 +31,6 @@ function data:__init(data_file)
 
    self.lengths = f:read('sent_lens'):all()
    self.max_len = f:read('max_len'):all()[1]
-   self.nclasses = f:read('nclasses_chunk'):all():long()[1]
    self.nfeatures = f:read('nfeatures'):all():long()[1]
    self.length = self.lengths:size(1)
    self.dwin = f:read('dwin'):all():long()[1]
@@ -39,7 +38,7 @@ function data:__init(data_file)
    for i = 1, self.length do
      local len = self.lengths[i]
      self.input[len] = f:read(tostring(len)):all():double()
-     self.output[len] = f:read(tostring(len) .. "_chunks"):all():double()
+     self.output[len] = f:read(tostring(len) .. "output"):all():double()
      if opt.gpu > 0 then
        self.input[len] = self.input[len]:cuda()
        self.output[len] = self.output[len]:cuda()
@@ -139,6 +138,6 @@ f:write('output2', all_hidden[3]:float())
 f:write('states2', all_hidden[4]:float())
 f:write('sent_lens', data.lengths:long())
 f:write('nsent', torch.Tensor(nsent):long()) -- number of sentences per each length
-f:write('nclasses', torch.Tensor{data.nclasses}:long())
+f:write('nclasses', torch.Tensor{data.nfeatures}:long())
 f:write('state_dim', torch.Tensor{opt.rnn_size}:long())
 f:close()
