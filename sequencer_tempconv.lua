@@ -49,9 +49,9 @@ function data:__init(data_file, tag_file)
      local pad_len = len
      local nsent = self.nsent[i]
      if opt.task == 'chunks' then
-       self.output[len] = g:read(tostring(len) .. "_chunks"):all():double()
+       self.output[len] = g:read(tostring(len) .. "chunk"):all():double()
      else
-       self.output[len] = g:read(tostring(len) .. "_pos"):all():double()
+       self.output[len] = g:read(tostring(len) .. "pos"):all():double()
      end
      if opt.wide > 0 then
        pad_len = len + 2 * torch.floor(opt.dwin/2)
