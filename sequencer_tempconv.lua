@@ -27,6 +27,8 @@ cmd:option('-dhid', 300, 'hidden dimension')
 cmd:option('-dwin', 5, 'window dimension')
 cmd:option('-param_init', 0.05, 'initial parameter values')
 cmd:option('-dropout_prob', 0.5, 'probability of dropout')
+cmd:option('-weight_cost', 0, 'L2 weight penalization')
+cmd:option('-smooth', 1e-8, 'smoothing for adaptive gradient')
 
 local data = torch.class('data')
 function data:__init(data_file, tag_file)
