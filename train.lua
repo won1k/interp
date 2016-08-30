@@ -27,6 +27,7 @@ end
 
 function train(train_data, test_data, model, criterion)
   local last_score = 1e9
+  local t = 1
   local params, gradParams = model:getParameters()
   local gradDenom = torch.ones(gradParams:size())
   local gradPrevDenom = torch.zeros(gradParams:size())
@@ -82,6 +83,7 @@ function train(train_data, test_data, model, criterion)
     -- Validation error
     local score = eval(test_data, model, criterion)
     local savefile = string.format('%s_epoch%.2f_%.2f.t7', opt.savefile, t, score)
+    -- Save at end
     if t == opt.epochs then
       torch.save(savefile, model)
       print('saving checkpoint to ' .. savefile)
@@ -95,6 +97,7 @@ function train(train_data, test_data, model, criterion)
     last_score = score
     -- Epoch summary
     print(t, score, opt.learning_rate)
+    t = t + 1
   end
 end
 
