@@ -78,7 +78,7 @@ function train(train_data, test_data, model, criterion)
           -- Backward prop
           model:backward(train_input_mb, criterion:backward(model.output, train_output_mb))
           -- Adaptive gradient
-          --gradParams, gradDenom, gradPrevDenom = adaptiveGradient(params, gradParams, gradDenom, gradPrevDenom, prevGrad, opt.adapt)
+          gradParams, gradDenom, gradPrevDenom = adaptiveGradient(params, gradParams, gradDenom, gradPrevDenom, prevGrad, opt.adapt)
           -- Parameter update
           params:addcdiv(-opt.learning_rate, gradParams, gradDenom)
           prevGrad:mul(0.9):addcdiv(0.1, gradParams, gradDenom)
@@ -96,7 +96,7 @@ function train(train_data, test_data, model, criterion)
     end
     -- Learning rate update
     if opt.adapt == 'none' then
-      if score > last_score - .01 then
+      if score > last_score - .0001 then
         opt.learning_rate = opt.learning_rate / 2
       end
     end
