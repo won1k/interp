@@ -1,6 +1,7 @@
 -- torch.setheaptracking(true)
 require 'hdf5';
 require 'rnn';
+require 'train.lua';
 
 cmd = torch.CmdLine()
 
@@ -70,6 +71,9 @@ end
 function make_model(train_data, lt_weights) -- batch_size x sentlen tensor input
   local model = nn.Sequential()
   local LT = nn.LookupTable(lt_weights:size(1), lt_weights:size(2))
+  if opt.wtlearn == 0 then
+    LT.weight = lt_weights
+  end
   model:add(LT) -- batch_size x sentlen x state_dim
   local temp = nn.Sequential()
   temp:add(nn.SplitTable(1)) -- batch_size table of sentlen x state_dim
@@ -99,15 +103,12 @@ function make_model(train_data, lt_weights) -- batch_size x sentlen tensor input
   return model, criterion
 end
 
-function train(train_data, test_data, model, criterion, lt_weights)
+function train_word(train_data, test_data, model, criterion, lt_weights)
   local last_score = 1e9
   local params, gradParams = model:getParameters()
   params:uniform(-opt.param_init, opt.param_init)
   -- Get params to prevent LT weights update
   local LTweights, LTgrad = model:get(1):getParameters()
-  if opt.wtlearn == 0 then
-    LTweights = lt_weights
-  end
   for t = 1, opt.epochs do
     model:training()
     print("Training epoch: " .. t)
@@ -189,7 +190,7 @@ function eval(data, model, criterion)
   return math.exp(nll / total)
 end
 
-function predict(data, model)
+function predict_word(data, model)
   model:evaluate()
   local output = hdf5.open(opt.testoutfile, 'w')
   local accuracy = 0
@@ -248,10 +249,10 @@ function main()
     local model, criterion = make_model(train_data, lt_weights)
 
     -- Train.
-    train(train_data, test_data, model, criterion, lt_weights)
+    train_word(train_data, test_data, model, criterion, lt_weights)
 
     -- Test.
-    predict(test_data, model)
+    predict_word(test_data, model)
 end
 
 main()
