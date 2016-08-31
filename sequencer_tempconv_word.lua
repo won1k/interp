@@ -13,7 +13,7 @@ cmd:option('-testoutfile', 'seq_pad_results_word.hdf5', 'output file for test')
 cmd:option('-ltweights', 'embeddings/lstm_LT.h5', 'file containing LT weights/embeddings')
 cmd:option('-gpu', 0, 'whether to use gpu')
 cmd:option('-wide', 1, '1 if wide convolution')
-cmd:option('-task', 'chunks', 'chunks or pos')
+cmd:option('-task', 'chunk', 'chunks or pos')
 cmd:option('-wtlearn', 0, 'whether to learn embeddings (1)')
 
 -- Hyperparameters
@@ -35,20 +35,12 @@ function data:__init(data_file)
    self.lengths = f:read('sent_lens'):all():long()
    self.max_len = f:read('max_len'):all()[1]
    self.nlengths = self.lengths:size(1)
-   if opt.task == 'chunks' then
-     self.nclasses = f:read('nclasses_chunk'):all():long()[1]
-   else
-     self.nclasses = f:read('nclasses_pos'):all():long()[1]
-   end
+   self.nclasses = f:read('nclasses_' .. opt.task):all():long()[1]
    self.nfeatures = f:read('nfeatures'):all():long()[1]
    for i = 1, self.nlengths do
      local len = self.lengths[i]
      self.input[len] = f:read(tostring(len)):all():double()
-     if opt.task == 'chunks' then
-       self.output[len] = f:read(tostring(len) .. "_chunks"):all():double()
-     else
-       self.output[len] = f:read(tostring(len) .. "_pos"):all():double()
-     end
+     self.output[len] = f:read(tostring(len) .. opt.task):all():double()
      if opt.gpu > 0 then
        self.input[len] = self.input[len]:cuda()
        self.output[len] = self.output[len]:cuda()
