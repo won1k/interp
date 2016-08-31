@@ -97,7 +97,9 @@ function make_model(train_data) -- batch_size x sentlen x state_dim tensor input
   model:add(nn.SplitTable(1)) -- (sent_len - 4) table of batch_size x hid_dim
   local seq = nn.Sequential()
   seq:add(nn.HardTanh())
-  seq:add(nn.Dropout(opt.dropout_prob))
+  if opt.dropout_prob > 0 then
+    seq:add(nn.Dropout(opt.dropout_prob))
+  end
   seq:add(nn.Linear(opt.dhid, train_data.nclasses))
   seq:add(nn.LogSoftMax())
   model:add(nn.Sequencer(seq))

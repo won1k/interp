@@ -15,6 +15,7 @@ cmd:option('-gpu', 0, 'whether to use gpu')
 cmd:option('-wide', 1, '1 if wide convolution')
 cmd:option('-task', 'chunk', 'chunks or pos')
 cmd:option('-wtlearn', 0, 'whether to learn embeddings (1)')
+cmd:option('-adapt', 'none', 'adagrad, adadelta, rms, or none')
 
 -- Hyperparameters
 cmd:option('-learning_rate', 0.01, 'learning rate')
@@ -99,6 +100,15 @@ function train_word(train_data, test_data, model, criterion, lt_weights)
   local last_score = 1e9
   local params, gradParams = model:getParameters()
   params:uniform(-opt.param_init, opt.param_init)
+  -- Initialize tensors
+  local gradDenom = torch.ones(gradParams:size())
+  local gradPrevDenom = torch.zeros(gradParams:size())
+  local prevGrad = torch.zeros(gradParams:size())
+  if opt.gpu > 0 then
+    gradDenom = gradDenom:cuda()
+    gradPrevDenom = gradPrevDenom:cuda()
+    prevGrad = prevGrad:cuda()
+  end
   -- Get params to prevent LT weights update
   local LTweights, LTgrad = model:get(1):getParameters()
   for t = 1, opt.epochs do
@@ -130,7 +140,13 @@ function train_word(train_data, test_data, model, criterion, lt_weights)
           if opt.wtlearn == 0 then
             LTgrad:zero()
           end
-          model:updateParameters(opt.learning_rate)
+          if opt.adapt == 'none' then
+            model:updateParameters(opt.learning_rate)
+          else
+            gradParams, gradDenom, gradPrevDenom = adaptiveGradient(params, gradParams, gradDenom, gradPrevDenom, prevGrad, adapt)
+            params:addcdiv(-opt.learning_rate, gradParams, gradDenom)
+            prevGrad:mul(0.9):addcdiv(0.1, gradParams, gradDenom)
+          end
         end
       end
     end
@@ -141,9 +157,11 @@ function train_word(train_data, test_data, model, criterion, lt_weights)
       torch.save(savefile, model)
       print('saving checkpoint to ' .. savefile)
     end
-
-    if score > last_score - .001 then
-       opt.learning_rate = opt.learning_rate / 2
+    -- Update learning rate if not
+    if opt.adapt == 'none' then
+      if score > last_score - .001 then
+        opt.learning_rate = opt.learning_rate / 2
+      end
     end
     last_score = score
 
