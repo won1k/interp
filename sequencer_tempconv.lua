@@ -15,7 +15,7 @@ cmd:option('-testoutfile', 'seq_test_results.hdf5', 'output file for test')
 cmd:option('-gpu', 0, 'whether to use gpu')
 cmd:option('-wide', 1, '1 if wide convolution (padded), 0 otherwise')
 cmd:option('-conv', 1, '1 if CNN, 0 if feed-forward NN (linear)')
-cmd:option('-task', 'chunks', 'chunks or pos')
+cmd:option('-task', 'chunk', 'chunks or pos')
 cmd:option('-adapt', 'rms', 'rmsprop (rms), adagrad, adadelta, or none')
 
 -- Hyperparameters
@@ -39,11 +39,7 @@ function data:__init(data_file, tag_file)
    self.lengths = f:read('sent_lens'):all():long()
    self.nsent = f:read('nsent'):all():long()
    self.nlengths = self.lengths:size(1)
-   if opt.task == 'chunks' then
-     self.nclasses = g:read('nclasses_chunk'):all():long()[1]
-   else
-     self.nclasses = g:read('nclasses_pos'):all():long()[1]
-   end
+   self.nclasses = g:read('nclasses_' .. opt.task):all():long()[1]
    self.state_dim = f:read('state_dim'):all():long()[1]
    -- Load sequencer data from total x 650 state file
    local curr_idx = 1
@@ -52,11 +48,7 @@ function data:__init(data_file, tag_file)
      local len = self.lengths[i]
      local pad_len = len
      local nsent = self.nsent[i]
-     if opt.task == 'chunks' then
-       self.output[len] = g:read(tostring(len) .. "chunk"):all():double()
-     else
-       self.output[len] = g:read(tostring(len) .. "pos"):all():double()
-     end
+     self.output[len] = g:read(tostring(len) .. opt.task):all():double()
      if opt.wide > 0 then
        pad_len = len + 2 * torch.floor(opt.dwin/2)
      end
