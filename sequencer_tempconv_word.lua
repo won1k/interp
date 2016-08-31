@@ -226,7 +226,6 @@ function main()
    	-- Parse input params
    	opt = cmd:parse(arg)
     if opt.gpu > 0 then
-      require 'cudnn';
       require 'cutorch';
       require 'cunn';
     end

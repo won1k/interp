@@ -26,8 +26,8 @@ function Module:get_states()
 	 --print(module)
 	 --print(torch.type(module))
          if torch.type(module) == "nn.LookupTable" then
-	    --print("found the table")
-	    --print(torch.type(module.weight))
+	    print("found the table")
+	    print(torch.type(module.weight))
             weights =  module.weight
          else
             module:get_states()
@@ -37,7 +37,7 @@ function Module:get_states()
 end
 
 model = torch.load(opt.checkpoint_file)
- model:get_states()
+model:get_states()
 local f = hdf5.open(opt.output_file, 'w')
 f:write('weights', weights:float())
 f:close()
