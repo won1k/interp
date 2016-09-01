@@ -65,18 +65,7 @@ def get_data(args):
             for sentence in sent_list:
                 print >>out, ' '.join([idx_to_word[word] for word in sentence])
         out.close()
-
-    def add_padding(sentences, pos_seqs, chunk_seqs, sent_lens, dwin):
-        for length in sent_lens:
-            for idx, sentence in enumerate(sentences[length]):
-                sentences[length][idx] = [target_indexer.convert('PAD')] * (dwin/2) + \
-                    sentences[length][idx] + [target_indexer.convert('PAD')] * (dwin/2)
-                pos_seqs[length][idx] = [target_indexer.convert_pos('PAD')] * (dwin/2) + \
-                    pos_seqs[length][idx] + [target_indexer.convert_pos('PAD')] * (dwin/2)
-                chunk_seqs[length][idx] = [target_indexer.convert_chunk('PAD')] * (dwin/2) + \
-                    chunk_seqs[length][idx] + [target_indexer.convert_chunk('PAD')] * (dwin/2)
-        return sentences, pos_seqs, chunk_seqs
-
+        
     def convert(datafile, outfile, dwin):
         # Parse and convert data
         with open(datafile, 'r') as f:
@@ -99,10 +88,6 @@ def get_data(args):
         # Reoutput raw data ordered by length
         text_output(datafile, sentences)
 
-        # Add padding for windowed models
-        if dwin > 0:
-            sentences = add_padding(sentences, sent_lens, dwin)
-
         # Output HDF5 for torch
         f = h5py.File(outfile, "w")
         f["sent_lens"] = np.array(sent_lens, dtype=int)
@@ -112,9 +97,9 @@ def get_data(args):
         f["nfeatures"] = np.array([target_indexer.counter - 1], dtype=int)
         f["dwin"] = np.array([dwin], dtype=int)
 
-    convert(args.trainfile, args.outputfile + ".hdf5", args.dwin)
+    convert(args.trainfile, args.outputfile + ".hdf5")
     target_indexer.lock()
-    convert(args.testfile, args.outputfile + "_test" + ".hdf5", args.dwin)
+    convert(args.testfile, args.outputfile + "_test" + ".hdf5")
     target_indexer.write(args.outputfile + ".dict")
 
 def main(arguments):
