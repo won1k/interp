@@ -95,7 +95,6 @@ def get_data(args):
             f[str(length)] = np.array(sentences[length], dtype=int)
         f["max_len"] = np.array([target_indexer.max_len], dtype=int)
         f["nfeatures"] = np.array([target_indexer.counter - 1], dtype=int)
-        f["dwin"] = np.array([dwin], dtype=int)
 
     convert(args.trainfile, args.outputfile + ".hdf5")
     target_indexer.lock()
