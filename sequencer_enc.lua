@@ -179,10 +179,13 @@ function train(data, valid_data, encoder, decoder, criterion)
       end
       print('Training error', trainErr / total)
       local score = eval(valid_data, encoder, decoder)
-      --local savefile = string.format('%s_epoch%.2f_%.2f.t7',
-      --                               opt.savefile, epoch, score)
-      --torch.save(savefile, encoder)
-      --print('saving checkpoint to ' .. savefile)
+      local savefile = string.format('%s_epoch%.2f_%.2f',
+                                    opt.savefile, epoch, score)
+      if epoch % (opt.epochs/2) == 0 then
+        torch.save(savefile .. 'encoder.t7', encoder)
+        torch.save(savefile .. 'decoder.t7', decoder)
+        print('saving checkpoint to ' .. savefile)
+      end
 
       --if score > last_score - .3 then
       --   opt.learning_rate = opt.learning_rate / 2
@@ -191,7 +194,7 @@ function train(data, valid_data, encoder, decoder, criterion)
       last_score = score
       encoder:forget()
       decoder:forget()
-      print(t, score, opt.learning_rate)
+      print(epoch, score, opt.learning_rate)
    end
 end
 
