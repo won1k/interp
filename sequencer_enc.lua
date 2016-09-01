@@ -12,7 +12,6 @@ cmd:option('-learning_rate', 0.7, 'learning rate')
 cmd:option('-bsize', 32, 'batch size')
 cmd:option('-seqlen', 20, 'sequence length')
 cmd:option('-max_grad_norm', 5, 'max l2-norm of concatenation of all gradParam tensors')
---cmd:option('-dropoutProb', 0.5, 'dropoff param')
 cmd:option('-auto', 1, '1 if autoencoder (i.e. target = source), 0 otherwise')
 
 cmd:option('-data_file','convert_seq/data_enc.hdf5','data directory. Should contain data.hdf5 with input data')
