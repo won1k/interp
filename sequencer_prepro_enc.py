@@ -65,8 +65,8 @@ def get_data(args):
             for sentence in sent_list:
                 print >>out, ' '.join([idx_to_word[word] for word in sentence])
         out.close()
-        
-    def convert(datafile, outfile, dwin):
+
+    def convert(datafile, outfile):
         # Parse and convert data
         with open(datafile, 'r') as f:
             sentences = {}
