@@ -24,6 +24,7 @@ cmd:option('-max_grad_norm', 5, 'max l2-norm of concatenation of all gradParam t
 cmd:option('-dropout_prob', 0.5, 'dropoff param')
 cmd:option('-param_init', 0.05, 'initialize parameters at')
 cmd:option('-weight_cost', 0, 'L2 weight regularization')
+cmd:option('-start_annealing', 0.5, 'start annealing learning rate at fraction of total epochs')
 
 opt = cmd:parse(arg)
 
@@ -145,7 +146,7 @@ function train(data, valid_data, model, criterion)
           model:backward(input_mb, criterion:backward(model.output, output_mb))
 
           --Adaptive gradient and norm
-          gradParams, gradDenom, gradPrevDenom = adaptiveGradient(params, gradParams, gradDenom, gradPrevDenom, prevGrad, opt.adapt)
+          --gradParams, gradDenom, gradPrevDenom = adaptiveGradient(params, gradParams, gradDenom, gradPrevDenom, prevGrad, opt.adapt)
           local grad_norm = gradParams:norm()
           if grad_norm > opt.max_grad_norm then
              gradParams:mul(opt.max_grad_norm / grad_norm)
@@ -165,7 +166,7 @@ function train(data, valid_data, model, criterion)
         print('saving checkpoint to ' .. savefile)
       end
 
-      if opt.adapt == 'none' then
+      if opt.adapt == 'none' and epoch > opt.start_annealing * opt.epochs then
         if score > last_score - .3 then
           opt.learning_rate = opt.learning_rate / 2
         end
