@@ -167,7 +167,7 @@ function train(data, valid_data, model, criterion)
       end
 
       if opt.adapt == 'none' and epoch > opt.start_annealing * opt.epochs then
-        if score > last_score - .3 then
+        if score > last_score + 20 then
           opt.learning_rate = opt.learning_rate / 2
         end
       end
