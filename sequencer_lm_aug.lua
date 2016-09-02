@@ -85,9 +85,11 @@ function train(data, valid_data, model, criterion)
    for epoch = 1, opt.epochs do
       model:training()
       print('epoch: ' .. epoch)
+      local permIdx = torch.randperm(data:size())
       for i = 1, data:size() do
-        local sentlen = data.lengths[i]
-        print(sentlen)
+        local sentlen = data.lengths[permIdx[i]]
+        io.write("\rSentence length: " .. sentlen)
+        io.flush()
         local d = data[sentlen]
         local nsent = d[1]:size(1) -- nsent x sentlen input
         -- If wide convolution, add length for padding
