@@ -144,12 +144,12 @@ function train(data, valid_data, model, criterion)
           model:zeroGradParameters()
           model:backward(input_mb, criterion:backward(model.output, output_mb))
 
-          --local grad_norm = gradParams:norm()
-          --if grad_norm > opt.max_grad_norm then
-          --   gradParams:mul(opt.max_grad_norm / grad_norm)
-          --end
-          --params:add(gradParams:mul(-opt.learning_rate))
+          --Adaptive gradient and norm
           gradParams, gradDenom, gradPrevDenom = adaptiveGradient(params, gradParams, gradDenom, gradPrevDenom, prevGrad, opt.adapt)
+          local grad_norm = gradParams:norm()
+          if grad_norm > opt.max_grad_norm then
+             gradParams:mul(opt.max_grad_norm / grad_norm)
+          end
           -- Parameter update
           params:addcdiv(-opt.learning_rate, gradParams, gradDenom)
           prevGrad:mul(0.9):addcdiv(0.1, gradParams, gradDenom)
