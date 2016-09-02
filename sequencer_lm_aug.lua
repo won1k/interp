@@ -102,7 +102,7 @@ end
 
 function train(data, valid_data, model, criterion)
    local last_score = 1e9
-   local params, grad_params = model:getParameters()
+   local params, gradParams = model:getParameters()
    params:uniform(-opt.param_init, opt.param_init)
    -- Initialize tensors
    local gradDenom = torch.ones(gradParams:size())
@@ -143,11 +143,11 @@ function train(data, valid_data, model, criterion)
           model:zeroGradParameters()
           model:backward(input_mb, criterion:backward(model.output, output_mb))
 
-          --local grad_norm = grad_params:norm()
+          --local grad_norm = gradParams:norm()
           --if grad_norm > opt.max_grad_norm then
-          --   grad_params:mul(opt.max_grad_norm / grad_norm)
+          --   gradParams:mul(opt.max_grad_norm / grad_norm)
           --end
-          --params:add(grad_params:mul(-opt.learning_rate))
+          --params:add(gradParams:mul(-opt.learning_rate))
           gradParams, gradDenom, gradPrevDenom = adaptiveGradient(params, gradParams, gradDenom, gradPrevDenom, prevGrad, opt.adapt)
           -- Parameter update
           params:addcdiv(-opt.learning_rate, gradParams, gradDenom)
