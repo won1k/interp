@@ -23,6 +23,7 @@ cmd:option('-seqlen', 20, 'sequence length')
 cmd:option('-max_grad_norm', 5, 'max l2-norm of concatenation of all gradParam tensors')
 cmd:option('-dropout_prob', 0.5, 'dropoff param')
 cmd:option('-param_init', 0.05, 'initialize parameters at')
+cmd:option('-weight_cost', 0, 'L2 weight regularization')
 
 opt = cmd:parse(arg)
 
