@@ -10,6 +10,7 @@ cmd:option('-savefile', 'checkpoint_seq/lm','filename to autosave the checkpoint
 cmd:option('-gpu', 1, 'which gpu to use. 0 = use CPU')
 cmd:option('-feature', 'chunk', 'which feature to use (none for no feature)')
 cmd:option('-wide', 1, '1 if wide convolution (padded), 0 otherwise')
+cmd:option('-adapt', 'adagrad', 'adagrad/rms/adadelta/none')
 
 cmd:option('-dhid', 650, 'size of LSTM internal state')
 cmd:option('-dword', 650, 'dimensionality of word embeddings')
@@ -78,10 +79,40 @@ function data.__index(self, idx)
    end
 end
 
+function adaptiveGradient(params, gradParams, gradDenom, gradPrevDenom, prevGrad, adapt)
+  -- L2 weight penalization
+  gradParams:add(-opt.weight_cost, params)
+  -- Adaptive gradient methods
+  if adapt == 'rms' then
+    gradDenom:cmul(gradParams, gradParams)
+    gradPrevDenom:mul(0.9):add(0.1, gradDenom)
+    gradDenom = torch.sqrt(gradPrevDenom):add(opt.smooth)
+  elseif adapt == 'adagrad' then
+    gradDenom:cmul(gradParams, gradParams)
+    gradPrevDenom:cmul(gradPrevDenom, gradPrevDenom):add(gradDenom):sqrt()
+    gradDenom = gradPrevDenom:clone()
+  elseif adapt == 'adadelta' then
+    gradDenom:cmul(gradPrevDenom, gradPrevDenom):mul(0.9):addcmul(0.1, gradParams, gradParams):add(opt.smooth):sqrt()
+    gradPrevDenom:cmul(prevGrad, prevGrad):add(opt.smooth):sqrt()
+    gradDenom:cdiv(gradDenom, gradPrevDenom)
+    gradPrevDenom = gradDenom:clone()
+  end
+  return gradParams, gradDenom, gradPrevDenom
+end
+
 function train(data, valid_data, model, criterion)
    local last_score = 1e9
    local params, grad_params = model:getParameters()
    params:uniform(-opt.param_init, opt.param_init)
+   -- Initialize tensors
+   local gradDenom = torch.ones(gradParams:size())
+   local gradPrevDenom = torch.zeros(gradParams:size())
+   local prevGrad = torch.zeros(gradParams:size())
+   if opt.gpu > 0 then
+     gradDenom = gradDenom:cuda()
+     gradPrevDenom = gradPrevDenom:cuda()
+     prevGrad = prevGrad:cuda()
+   end
    for epoch = 1, opt.epochs do
       model:training()
       print('epoch: ' .. epoch)
@@ -112,11 +143,15 @@ function train(data, valid_data, model, criterion)
           model:zeroGradParameters()
           model:backward(input_mb, criterion:backward(model.output, output_mb))
 
-          local grad_norm = grad_params:norm()
-          if grad_norm > opt.max_grad_norm then
-             grad_params:mul(opt.max_grad_norm / grad_norm)
-          end
-          params:add(grad_params:mul(-opt.learning_rate))
+          --local grad_norm = grad_params:norm()
+          --if grad_norm > opt.max_grad_norm then
+          --   grad_params:mul(opt.max_grad_norm / grad_norm)
+          --end
+          --params:add(grad_params:mul(-opt.learning_rate))
+          gradParams, gradDenom, gradPrevDenom = adaptiveGradient(params, gradParams, gradDenom, gradPrevDenom, prevGrad, opt.adapt)
+          -- Parameter update
+          params:addcdiv(-opt.learning_rate, gradParams, gradDenom)
+          prevGrad:mul(0.9):addcdiv(0.1, gradParams, gradDenom)
           model:forget()
         end
       end
@@ -129,8 +164,10 @@ function train(data, valid_data, model, criterion)
         print('saving checkpoint to ' .. savefile)
       end
 
-      if score > last_score - .3 then
-         opt.learning_rate = opt.learning_rate / 2
+      if opt.adapt == 'none' then
+        if score > last_score - .3 then
+          opt.learning_rate = opt.learning_rate / 2
+        end
       end
       last_score = score
 
