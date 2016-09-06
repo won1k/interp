@@ -85,7 +85,7 @@ function train(data, valid_data, model, criterion)
       local score = eval(valid_data, model)
       local savefile = string.format('%s_epoch%.2f_%.2f.t7',
                                      opt.savefile, epoch, score)
-      if epoch % (opt,epochs/2) == 0 then
+      if epoch % (opt.epochs/2) == 0 then
          torch.save(savefile, model)
          print('saving checkpoint to ' .. savefile)
       end
