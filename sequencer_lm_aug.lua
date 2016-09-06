@@ -168,7 +168,10 @@ function train(data, valid_data, model, criterion)
 
       if opt.adapt == 'none' and epoch > opt.start_annealing * opt.epochs then
         if score > last_score + 20 then
+          params:addcdiv(opt.learning_rate, gradParams, gradDenom) -- return to previous
           opt.learning_rate = opt.learning_rate / 2
+          params:addcdiv(-opt.learning_rate, gradParams, gradDenom) -- update using new learning rate
+          score = eval(valid_data, model)
         end
       end
       last_score = score

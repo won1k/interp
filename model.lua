@@ -85,8 +85,10 @@ function train(data, valid_data, model, criterion)
       local score = eval(valid_data, model)
       local savefile = string.format('%s_epoch%.2f_%.2f.t7',
                                      opt.savefile, epoch, score)
-      torch.save(savefile, model)
-      print('saving checkpoint to ' .. savefile)
+      if epoch % (opt,epochs/2) == 0 then
+         torch.save(savefile, model)
+         print('saving checkpoint to ' .. savefile)
+      end
 
       if score > last_score - .3 then
          opt.learning_rate = opt.learning_rate / 2
