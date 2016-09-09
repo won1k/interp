@@ -128,8 +128,8 @@ def get_data(args):
     target_indexer.lock()
     convert(args.testfile, args.outputfile + "_test" + ".hdf5", args.dwin)
     target_indexer.write(args.outputfile + ".dict")
-    target_indexer.write_chunks(args.outputfile + ".chunk.dict")
-    target_indexer.write_pos(args.outputfile + ".pos.dict")
+    #target_indexer.write_chunks(args.outputfile + ".chunk.dict")
+    #target_indexer.write_pos(args.outputfile + ".pos.dict")
 
 def main(arguments):
     global args
