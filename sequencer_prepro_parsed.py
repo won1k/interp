@@ -104,7 +104,7 @@ def get_data(args):
 
         # Reoutput raw data ordered by length
         #sequencer_template(datafile, sentences, pos_seqs, chunk_seqs)
-        text_output(datafile, sentences)
+        #text_output(datafile, sentences)
 
         # Add padding for windowed models
         if dwin > 0:
