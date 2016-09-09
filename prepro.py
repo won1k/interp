@@ -105,8 +105,8 @@ def get_data(args):
     if args.parsed == 0:
         parse_chunking(args.rawfile, args.targetfile)
         parse_chunking(args.rawtestfile, args.targetvalfile)
-        args.targetfile = open(args.targetfile, 'r')
-        args.targetvalfile = open(args.targetvalfile, 'r')
+    args.targetfile = open(args.targetfile, 'r')
+    args.targetvalfile = open(args.targetvalfile, 'r')
     convert(args.targetfile, args.batchsize, args.seqlength, args.outputfile + ".hdf5")
     target_indexer.lock()
     convert(args.targetvalfile, args.batchsize, args.seqlength, args.outputfile + "test" + ".hdf5")
