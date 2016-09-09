@@ -86,7 +86,7 @@ def get_data(args):
         with open(datafile, 'r') as f:
             sentences = {}
             outputs = {}
-            for i, orig_sentence in enumerate(targetfile):
+            for i, orig_sentence in enumerate(f):
                 orig_sentence = orig_sentence.strip().split() + ["</s>"]
                 sentence = [target_indexer.convert(w) for w in orig_sentence]
                 output = sentence[1:] + [target_indexer.convert("</s>")]
