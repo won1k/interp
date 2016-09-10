@@ -118,7 +118,7 @@ function train(data, valid_data, encoder, decoder, criterion)
          for sent_idx = 1, torch.ceil(nsent / opt.bsize) do
            local batch_idx = (sent_idx - 1) * opt.bsize
            local batch_size = math.min(sent_idx * opt.bsize, nsent) - batch_idx
-           local input_mb = input[{{1, sentlen}, { batch_idx + 1, batch_idx + batch_size }}] -- sentlen x batch_size tensor
+           local input_mb = input[{{1, sentlen - 1}, { batch_idx + 1, batch_idx + batch_size }}] -- sentlen x batch_size tensor
            local output_mb = output[{{}, { batch_idx + 1, batch_idx + batch_size }}]
            output_mb = nn.SplitTable(1):forward(output_mb) -- sentlen table of batch_size
 
@@ -127,7 +127,7 @@ function train(data, valid_data, encoder, decoder, criterion)
 
            -- Decoder forward prop
            forwardConnect(encoder, decoder)
-           local decoderInput = { input[{{sentlen + 1}, { batch_idx + 1, batch_idx + batch_size }}] }
+           local decoderInput = { input[{{sentlen}, {batch_idx + 1, batch_idx + batch_size}}] }
            decoder:remember()
            local decoderOutput = { decoder:forward(decoderInput[1])[1]:clone() }
            for t = 2, #output_mb do
