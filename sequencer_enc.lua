@@ -306,6 +306,7 @@ function main()
    -- Load models
    local encoder, decoder, criterion = make_model(train_data)
    if opt.loadfile:len() > 0 then
+    print("Loading old models...")
       encoder = torch.load(opt.loadfile .. 'encoder.t7')
       decoder = torch.load(opt.loadfile .. 'decoder.t7')
    end
