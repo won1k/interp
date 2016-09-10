@@ -213,10 +213,10 @@ function eval(data, encoder, decoder)
       output = nn.SplitTable(1):forward(output)
 
       -- Encoder forward prop
-      local encoderOutput = encoder:forward(input[{{1, sentlen}}]) -- sentlen table of batch_size x rnn_size
+      local encoderOutput = encoder:forward(input[{{1, sentlen-1}}]) -- sentlen table of batch_size x rnn_size
       -- Decoder forward prop
       forwardConnect(encoder, decoder)
-      local decoderInput = { input[{{sentlen + 1}}] }
+      local decoderInput = { input[{{sentlen}}] }
       decoder:remember()
       local decoderOutput = { decoder:forward(decoderInput[1])[1]:clone() }
       for t = 2, #output do
