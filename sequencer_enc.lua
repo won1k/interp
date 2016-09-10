@@ -8,7 +8,7 @@ cmd:option('-rnn_size', 650, 'size of LSTM internal state')
 cmd:option('-word_vec_size', 650, 'dimensionality of word embeddings')
 cmd:option('-num_layers', 2, 'number of layers in the LSTM')
 cmd:option('-epochs', 30, 'number of training epoch')
-cmd:option('-learning_rate', 0.7, 'learning rate')
+cmd:option('-learning_rate', 1, 'learning rate')
 cmd:option('-bsize', 32, 'batch size')
 cmd:option('-seqlen', 20, 'sequence length')
 cmd:option('-max_grad_norm', 5, 'max l2-norm of concatenation of all gradParam tensors')
@@ -19,6 +19,7 @@ cmd:option('-val_data_file','convert_seq/data_enc_test.hdf5','data directory. Sh
 cmd:option('-gpu', 1, 'which gpu to use. -1 = use CPU')
 cmd:option('-param_init', 0.05, 'initialize parameters at')
 cmd:option('-savefile', 'checkpoint_seq/enc','filename to autosave the checkpoint to')
+cmd:option('-loadfile', '', 'filename to load encoder/decoder from, if any')
 
 opt = cmd:parse(arg)
 
@@ -301,7 +302,13 @@ function main()
    -- Create the data loader class.
    local train_data = data.new(opt, opt.data_file)
    local valid_data = data.new(opt, opt.val_data_file)
+
+   -- Load models
    local encoder, decoder, criterion = make_model(train_data)
+   if opt.loadfile:len() > 0 then
+      encoder = torch.load(opt.loadfile .. 'encoder.t7')
+      decoder = torch.load(opt.loadfile .. 'decoder.t7')
+   end
 
    if opt.gpu > 0 then
       encoder:cuda()
