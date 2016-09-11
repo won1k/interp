@@ -129,6 +129,9 @@ function train(data, valid_data, encoder, decoder, criterion)
                 table.insert(revOutput, output_mb[sentlen - t + 1]:reshape(1, batch_size))
               end
               output_mb = nn.JoinTable(1):forward(revOutput)
+              if opt.gpu > 0 then
+                output_mb = output_mb:cuda()
+              end
            end
 
            -- Encoder forward prop
@@ -209,7 +212,13 @@ function eval(data, encoder, decoder)
       local d = data[sentlen]
       local input, output = d[1], d[2]
       local nsent = input:size(2)
-      output = nn.SplitTable(1):forward(output)
+      local revOutput
+      if opt.rev > 0 then
+        revOutput = {}
+        for t = 1, sentlen do
+          table.insert(revOutput, output[sentlen - t + 1]:reshape(1, nsent))
+        end
+      end
 
       -- Encoder forward prop
       local encoderOutput = encoder:forward(input[{{1, sentlen-1}}]) -- sentlen table of batch_size x rnn_size
