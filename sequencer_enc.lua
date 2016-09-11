@@ -122,24 +122,22 @@ function train(data, valid_data, encoder, decoder, criterion)
            local batch_size = math.min(sent_idx * opt.bsize, nsent) - batch_idx
            local input_mb = input[{{1, sentlen - 1}, { batch_idx + 1, batch_idx + batch_size }}] -- sentlen x batch_size tensor
            local output_mb = output[{{}, { batch_idx + 1, batch_idx + batch_size }}]
-           output_mb = nn.SplitTable(1):forward(output_mb) -- sentlen table of batch_size
+           local revOutput
+           if opt.rev > 0 then
+              revOutput = {}
+              for t = 1, #output_mb do
+                table.insert(revOutput, output_mb[#output_mb - t + 1])
+              end
+              output_mb = nn.JoinTable(1):forward(revOutput)
+           end
 
            -- Encoder forward prop
            local encoderOutput = encoder:forward(input_mb) -- sentlen table of batch_size x rnn_size
 
            -- Decoder forward prop
            forwardConnect(encoder, decoder)
-           local decoderInput
-           if opt.rev > 0 then
-              decoderInput = {input[{{sentlen}, {batch_idx + 1, batch_idx + batch_size}}]}
-              for t = 1, #output_mb - 1 do
-                table.insert(decoderInput, output_mb[t])
-              end
-              decoderInput = nn.JoinTable(1):forward(decoderInput)
-           else
-              decoderInput = torch.cat(input[{{sentlen}, {batch_idx + 1, batch_idx + batch_size}}],
+           local decoderInput = torch.cat(input[{{sentlen}, {batch_idx + 1, batch_idx + batch_size}}],
                 output_mb[{{1, sentlen - 1}, {}}], 1)
-           end
            if opt.gpu > 0 then
              decoderInput = decoderInput:cuda()
            else
@@ -148,13 +146,8 @@ function train(data, valid_data, encoder, decoder, criterion)
            decoderOutput = decoder:forward(decoderInput)
 
            -- Decoder backward prop
-           if opt.rev > 0 then
-              
-              revOutput = 
-              trainErr = trainErr + criterion:forward(decoderOutput, revOutput) * batch_size
-           else
-              trainErr = trainErr + criterion:forward(decoderOutput, output_mb) * batch_size
-           end
+           output_mb = nn.SplitTable(1):forward(output_mb)
+           trainErr = trainErr + criterion:forward(decoderOutput, output_mb) * batch_size
            total = total + sentlen * batch_size
            decoder:zeroGradParameters()
            decoder:backward(decoderInput, criterion:backward(decoderOutput, output_mb))
