@@ -218,7 +218,7 @@ function eval(data, encoder, decoder)
         for t = 1, sentlen do
           table.insert(revOutput, output[sentlen - t + 1]:reshape(1, nsent))
         end
-        output = nn.SplitTable(1):forward(revOutput)
+        output = revOutput
       else
         output = nn.SplitTable(1):forward(output)
       end
