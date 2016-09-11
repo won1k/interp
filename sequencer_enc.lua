@@ -13,6 +13,7 @@ cmd:option('-bsize', 32, 'batch size')
 cmd:option('-seqlen', 20, 'sequence length')
 cmd:option('-max_grad_norm', 5, 'max l2-norm of concatenation of all gradParam tensors')
 cmd:option('-auto', 1, '1 if autoencoder (i.e. target = source), 0 otherwise')
+cmd:option('-rev', 0, '1 if reversed output, 0 if normal')
 
 cmd:option('-data_file','convert_seq/data_enc.hdf5','data directory. Should contain data.hdf5 with input data')
 cmd:option('-val_data_file','convert_seq/data_enc_test.hdf5','data directory. Should contain data.hdf5 with input data')
@@ -128,30 +129,35 @@ function train(data, valid_data, encoder, decoder, criterion)
 
            -- Decoder forward prop
            forwardConnect(encoder, decoder)
-           local decoderInput = { input[{{sentlen}, {batch_idx + 1, batch_idx + batch_size}}] }
-           decoder:remember()
-           local decoderOutput = { decoder:forward(decoderInput[1])[1]:clone() }
-           for t = 2, #output_mb do
-             local _, nextInput = decoderOutput[t-1]:max(2)
-             table.insert(decoderInput, nextInput:reshape(1,batch_size):clone())
-             table.insert(decoderOutput, decoder:forward(decoderInput[t])[1]:clone())
+           local decoderInput
+           if opt.rev > 0 then
+              decoderInput = {input[{{sentlen}, {batch_idx + 1, batch_idx + batch_size}}]}
+              for t = 1, #output_mb - 1 do
+                table.insert(decoderInput, output_mb[t])
+              end
+              decoderInput = nn.JoinTable(1):forward(decoderInput)
+           else
+              decoderInput = torch.cat(input[{{sentlen}, {batch_idx + 1, batch_idx + batch_size}}],
+                output_mb[{{1, sentlen - 1}, {}}], 1)
            end
-           decoderInput = nn.JoinTable(1):forward(decoderInput)
            if opt.gpu > 0 then
              decoderInput = decoderInput:cuda()
            else
              decoderInput = decoderInput:double()
            end
+           decoderOutput = decoder:forward(decoderInput)
 
            -- Decoder backward prop
-           trainErr = trainErr + criterion:forward(decoderOutput, output_mb) * batch_size
+           if opt.rev > 0 then
+              
+              revOutput = 
+              trainErr = trainErr + criterion:forward(decoderOutput, revOutput) * batch_size
+           else
+              trainErr = trainErr + criterion:forward(decoderOutput, output_mb) * batch_size
+           end
            total = total + sentlen * batch_size
            decoder:zeroGradParameters()
-           decoder:forget()
-           forwardConnect(encoder, decoder)
-           local allDecoderOutput = decoder:forward(decoderInput)
            decoder:backward(decoderInput, criterion:backward(decoderOutput, output_mb))
-           --print("Decoder norm", decGradParams:norm())
 
            -- Encoder backward prop
            encoder:zeroGradParameters()
@@ -161,7 +167,6 @@ function train(data, valid_data, encoder, decoder, criterion)
              table.insert(encGrads, encoderOutput[t]:zero())
            end
            encoder:backward(input_mb, encGrads)
-          -- print("Encoder norm", encGradParams:norm())
 
            -- Grad norm and update
            local encGradNorm = encGradParams:norm()
