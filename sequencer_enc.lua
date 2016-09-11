@@ -125,8 +125,8 @@ function train(data, valid_data, encoder, decoder, criterion)
            local revOutput
            if opt.rev > 0 then
               revOutput = {}
-              for t = 1, #output_mb do
-                table.insert(revOutput, output_mb[#output_mb - t + 1])
+              for t = 1, sentlen do
+                table.insert(revOutput, output_mb[sentlen - t + 1])
               end
               output_mb = nn.JoinTable(1):forward(revOutput)
            end
