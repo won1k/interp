@@ -216,7 +216,7 @@ function eval(data, encoder, decoder)
       if opt.rev > 0 then
         revOutput = {}
         for t = 1, sentlen do
-          table.insert(revOutput, output[sentlen - t + 1]:reshape(1, nsent))
+          table.insert(revOutput, output[sentlen - t + 1])
         end
         output = revOutput
       else
