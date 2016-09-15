@@ -143,7 +143,7 @@ function train(data, valid_data, encoder, decoder, criterion)
            -- Decoder forward prop
            forwardConnect(encoder, decoder)
            local decoderInput = torch.cat(input[{{sentlen + 1}, {batch_idx + 1, batch_idx + batch_size}}],
-                output_mb[{{1, sentlen}, {}}], 1)
+                output_mb[{{1, sentlen + 1}, {}}], 1)
            if opt.gpu > 0 then
              decoderInput = decoderInput:cuda()
            else
@@ -153,6 +153,8 @@ function train(data, valid_data, encoder, decoder, criterion)
 
            -- Decoder backward prop
            output_mb = nn.SplitTable(1):forward(output_mb)
+           print(decoderOutput)
+           print(output_mb)
            trainErr = trainErr + criterion:forward(decoderOutput, output_mb) * batch_size
            total = total + sentlen * batch_size
            decoder:zeroGradParameters()
