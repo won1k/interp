@@ -116,8 +116,6 @@ function train(data, valid_data, encoder, decoder, criterion)
          print("Sentence length: ", sentlen)
          local d = data[sentlen]
          local input, output = d[1], d[2]
-         print(input:size())
-         print(output:size())
          local nsent = input:size(2) -- sentlen x nsent input
          --if opt.wide > 0 then
          --  sentlen = sentlen + 2 * torch.floor(data.dwin/2)
@@ -155,8 +153,6 @@ function train(data, valid_data, encoder, decoder, criterion)
 
            -- Decoder backward prop
            output_mb = nn.SplitTable(1):forward(output_mb)
-           print(decoderOutput)
-           print(output_mb)
            trainErr = trainErr + criterion:forward(decoderOutput, output_mb) * batch_size
            total = total + sentlen * batch_size
            decoder:zeroGradParameters()
@@ -221,20 +217,21 @@ function eval(data, encoder, decoder)
       local nsent = input:size(2)
       local revOutput
       if opt.rev > 0 then
-        revOutput = {}
+        revInput = {}
         for t = 1, sentlen do
-          table.insert(revOutput, output[sentlen - t + 2])
+          table.insert(revInput, input[{{sentlen - t + 1},{}}])
         end
-        output = revOutput
-      else
-        output = nn.SplitTable(1):forward(output)
+        input_mb = nn.JoinTable(1):forward(revInput)
+        if opt.gpu > 0 then
+          input_mb = input_mb:cuda()
+        end
       end
 
       -- Encoder forward prop
       local encoderOutput = encoder:forward(input[{{1, sentlen}}]) -- sentlen table of batch_size x rnn_size
       -- Decoder forward prop
       forwardConnect(encoder, decoder)
-      local decoderInput = { input[{{sentlen}}] }
+      local decoderInput = { input[{{sentlen + 1}}] }
       decoder:remember()
       local decoderOutput = { decoder:forward(decoderInput[1])[1]:clone() }
       for t = 2, sentlen + 1 do
