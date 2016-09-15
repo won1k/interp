@@ -239,7 +239,7 @@ function eval(data, encoder, decoder)
         table.insert(decoderInput, nextInput:reshape(1,nsent):clone())
         table.insert(decoderOutput, decoder:forward(decoderInput[t])[1]:clone())
       end
-
+      output = nn.SplitTable(1):forward(output)
       nll = nll + criterion:forward(decoderOutput, output) * nsent
       total = total + sentlen * nsent
 
