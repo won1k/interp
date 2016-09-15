@@ -227,7 +227,7 @@ function eval(data, encoder, decoder)
       end
 
       -- Encoder forward prop
-      local encoderOutput = encoder:forward(input[{{1, sentlen-1}}]) -- sentlen table of batch_size x rnn_size
+      local encoderOutput = encoder:forward(input[{{1, sentlen}}]) -- sentlen table of batch_size x rnn_size
       -- Decoder forward prop
       forwardConnect(encoder, decoder)
       local decoderInput = { input[{{sentlen}}] }
