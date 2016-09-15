@@ -233,7 +233,7 @@ function eval(data, encoder, decoder)
       local decoderInput = { input[{{sentlen}}] }
       decoder:remember()
       local decoderOutput = { decoder:forward(decoderInput[1])[1]:clone() }
-      for t = 2, sentlen do
+      for t = 2, sentlen + 1 do
         local _, nextInput = decoderOutput[t-1]:max(2)
         table.insert(decoderInput, nextInput:reshape(1,nsent):clone())
         table.insert(decoderOutput, decoder:forward(decoderInput[t])[1]:clone())
