@@ -8,7 +8,7 @@ cmd:option('-rnn_size', 650, 'size of LSTM internal state')
 cmd:option('-word_vec_size', 650, 'dimensionality of word embeddings')
 cmd:option('-num_layers', 2, 'number of layers in the LSTM')
 cmd:option('-epochs', 30, 'number of training epoch')
-cmd:option('-learning_rate', 1, 'learning rate')
+cmd:option('-learning_rate', 0.7, 'learning rate')
 cmd:option('-bsize', 32, 'batch size')
 cmd:option('-seqlen', 20, 'sequence length')
 cmd:option('-max_grad_norm', 5, 'max l2-norm of concatenation of all gradParam tensors')
@@ -131,7 +131,7 @@ function train(data, valid_data, encoder, decoder, criterion)
            if opt.rev > 0 then
               revInput = {}
               for t = 1, sentlen do
-                table.insert(revInput, input_mb[{{sentlen - t + 1},{}}]
+                table.insert(revInput, input_mb[{{sentlen - t + 1},{}}])
               end
               input_mb = nn.JoinTable(1):forward(revInput)
               if opt.gpu > 0 then
