@@ -127,15 +127,15 @@ function train(data, valid_data, encoder, decoder, criterion)
            local batch_size = math.min(sent_idx * opt.bsize, nsent) - batch_idx
            local input_mb = input[{{1, sentlen}, { batch_idx + 1, batch_idx + batch_size }}] -- sentlen x batch_size tensor
            local output_mb = output[{{}, { batch_idx + 1, batch_idx + batch_size }}]
-           local revOutput
+           local revInput
            if opt.rev > 0 then
-              revOutput = {}
+              revInput = {}
               for t = 1, sentlen do
-                table.insert(revOutput, output_mb[sentlen - t + 2]:reshape(1, batch_size))
+                table.insert(revInput, input_mb[{{sentlen - t + 1},{}}]
               end
-              output_mb = nn.JoinTable(1):forward(revOutput)
+              input_mb = nn.JoinTable(1):forward(revInput)
               if opt.gpu > 0 then
-                output_mb = output_mb:cuda()
+                input_mb = input_mb:cuda()
               end
            end
 
