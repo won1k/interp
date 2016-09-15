@@ -117,10 +117,13 @@ function train(data, valid_data, encoder, decoder, criterion)
          local d = data[sentlen]
          local input, output = d[1], d[2]
          local nsent = input:size(2) -- sentlen x nsent input
+         --if opt.wide > 0 then
+         --  sentlen = sentlen + 2 * torch.floor(data.dwin/2)
+         --end
          for sent_idx = 1, torch.ceil(nsent / opt.bsize) do
            local batch_idx = (sent_idx - 1) * opt.bsize
            local batch_size = math.min(sent_idx * opt.bsize, nsent) - batch_idx
-           local input_mb = input[{{1, sentlen - 1}, { batch_idx + 1, batch_idx + batch_size }}] -- sentlen x batch_size tensor
+           local input_mb = input[{{1, sentlen}, { batch_idx + 1, batch_idx + batch_size }}] -- sentlen x batch_size tensor
            local output_mb = output[{{}, { batch_idx + 1, batch_idx + batch_size }}]
            local revOutput
            if opt.rev > 0 then
@@ -139,7 +142,7 @@ function train(data, valid_data, encoder, decoder, criterion)
 
            -- Decoder forward prop
            forwardConnect(encoder, decoder)
-           local decoderInput = torch.cat(input[{{sentlen}, {batch_idx + 1, batch_idx + batch_size}}],
+           local decoderInput = torch.cat(input[{{sentlen + 1}, {batch_idx + 1, batch_idx + batch_size}}],
                 output_mb[{{1, sentlen - 1}, {}}], 1)
            if opt.gpu > 0 then
              decoderInput = decoderInput:cuda()
