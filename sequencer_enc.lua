@@ -15,6 +15,7 @@ cmd:option('-seqlen', 20, 'sequence length')
 cmd:option('-max_grad_norm', 5, 'max l2-norm of concatenation of all gradParam tensors')
 cmd:option('-auto', 1, '1 if autoencoder (i.e. target = source), 0 otherwise')
 cmd:option('-rev', 0, '1 if reversed output, 0 if normal')
+cmd:option('-ptb', 0, '1 if ptb')
 
 cmd:option('-data_file','convert_seq/data_enc.hdf5','data directory. Should contain data.hdf5 with input data')
 cmd:option('-val_data_file','convert_seq/data_enc_test.hdf5','data directory. Should contain data.hdf5 with input data')
@@ -116,6 +117,9 @@ function train(data, valid_data, encoder, decoder, criterion)
          local sentlen = data.lengths[i]
          print("Sentence length: ", sentlen)
          local d = data[sentlen]
+         if opt.ptb > 0 then
+          sentlen = sentlen - 1
+         end
          local input, output = d[1], d[2]
          local nsent = input:size(2) -- sentlen x nsent input
          --if opt.wide > 0 then
@@ -214,6 +218,9 @@ function eval(data, encoder, decoder)
       local sentlen = data.lengths[i]
       local d = data[sentlen]
       local input, output = d[1], d[2]
+      if opt.ptb > 0 then
+        sentlen = sentlen - 1
+      end
       local nsent = input:size(2)
       local revOutput
       if opt.rev > 0 then
