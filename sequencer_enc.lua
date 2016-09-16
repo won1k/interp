@@ -9,6 +9,7 @@ cmd:option('-word_vec_size', 650, 'dimensionality of word embeddings')
 cmd:option('-num_layers', 2, 'number of layers in the LSTM')
 cmd:option('-epochs', 30, 'number of training epoch')
 cmd:option('-learning_rate', 0.7, 'learning rate')
+cmd:option('-start_annealing', 0.5, 'fraction of epochs at which to start annealing learning rate')
 cmd:option('-bsize', 32, 'batch size')
 cmd:option('-seqlen', 20, 'sequence length')
 cmd:option('-max_grad_norm', 5, 'max l2-norm of concatenation of all gradParam tensors')
@@ -192,10 +193,9 @@ function train(data, valid_data, encoder, decoder, criterion)
         print('saving checkpoint to ' .. savefile)
       end
 
-      --if score > last_score - .3 then
-      --   opt.learning_rate = opt.learning_rate / 2
-      --end
-      --print('Learning rate', opt.learning_rate)
+      if score > last_score - .3 and epoch > opt.start_annealing * opt.epochs then
+         opt.learning_rate = opt.learning_rate / 2
+      end
       last_score = score
       encoder:forget()
       decoder:forget()
