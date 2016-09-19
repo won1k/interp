@@ -220,7 +220,7 @@ function train(data, valid_data, encoder, decoder, criterion)
            decGradParams, decGradDenom, decGradPrevDenom = adaptiveGradient(
                decParams, decGradParams, decGradDenom, decGradPrevDenom, decPrevGrad, opt.adapt)
            encGradParams, encGradDenom, encGradPrevDenom = adaptiveGradient(
-               encParams, encGradParams, gradDenom, gradPrevDenom, encPrevGrad, opt.adapt)
+               encParams, encGradParams, encGradDenom, encGradPrevDenom, encPrevGrad, opt.adapt)
            -- Parameter update
            decParams:addcdiv(-opt.learning_rate, decGradParams, decGradDenom)
            decPrevGrad:mul(0.9):addcdiv(0.1, decGradParams, decGradDenom)
