@@ -17,6 +17,7 @@ cmd:option('-auto', 1, '1 if autoencoder (i.e. target = source), 0 otherwise')
 cmd:option('-rev', 0, '1 if reversed output, 0 if normal')
 cmd:option('-ptb', 0, '1 if ptb')
 cmd:option('-adapt', 'none', 'adaptive gradient method (rms/adagrad/adadelta)')
+cmd:option('-weight_cost', 0, 'L2 weight decay')
 
 cmd:option('-data_file','convert_seq/data_enc.hdf5','data directory. Should contain data.hdf5 with input data')
 cmd:option('-val_data_file','convert_seq/data_enc_test.hdf5','data directory. Should contain data.hdf5 with input data')
