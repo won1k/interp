@@ -16,6 +16,7 @@ cmd:option('-max_grad_norm', 5, 'max l2-norm of concatenation of all gradParam t
 cmd:option('-auto', 1, '1 if autoencoder (i.e. target = source), 0 otherwise')
 cmd:option('-rev', 0, '1 if reversed output, 0 if normal')
 cmd:option('-ptb', 0, '1 if ptb')
+cmd:option('-adapt', 'none', 'adaptive gradient method (rms/adagrad/adadelta)')
 
 cmd:option('-data_file','convert_seq/data_enc.hdf5','data directory. Should contain data.hdf5 with input data')
 cmd:option('-val_data_file','convert_seq/data_enc_test.hdf5','data directory. Should contain data.hdf5 with input data')
@@ -26,6 +27,26 @@ cmd:option('-loadfile', '', 'filename to load encoder/decoder from, if any')
 
 opt = cmd:parse(arg)
 
+function adaptiveGradient(params, gradParams, gradDenom, gradPrevDenom, prevGrad, adapt)
+  -- L2 weight penalization
+  gradParams:add(-opt.weight_cost, params)
+  -- Adaptive gradient methods
+  if adapt == 'rms' then
+    gradDenom:cmul(gradParams, gradParams)
+    gradPrevDenom:mul(0.9):add(0.1, gradDenom)
+    gradDenom = torch.sqrt(gradPrevDenom):add(opt.smooth)
+  elseif adapt == 'adagrad' then
+    gradDenom:cmul(gradParams, gradParams)
+    gradPrevDenom:cmul(gradPrevDenom, gradPrevDenom):add(gradDenom):sqrt()
+    gradDenom = gradPrevDenom:clone()
+  elseif adapt == 'adadelta' then
+    gradDenom:cmul(gradPrevDenom, gradPrevDenom):mul(0.9):addcmul(0.1, gradParams, gradParams):add(opt.smooth):sqrt()
+    gradPrevDenom:cmul(prevGrad, prevGrad):add(opt.smooth):sqrt()
+    gradDenom:cdiv(gradDenom, gradPrevDenom)
+    gradPrevDenom = gradDenom:clone()
+  end
+  return gradParams, gradDenom, gradPrevDenom
+end
 
 -- Construct the data set.
 local data = torch.class("data")
@@ -106,6 +127,12 @@ function train(data, valid_data, encoder, decoder, criterion)
    local decParams, decGradParams = decoder:getParameters()
    encParams:uniform(-opt.param_init, opt.param_init)
    decParams:uniform(-opt.param_init, opt.param_init)
+   local decGradDenom = torch.ones(decGradParams:size())
+   local decGradPrevDenom = torch.zeros(decGradParams:size())
+   local decPrevGrad = torch.zeros(decGradParams:size())
+   local encGradDenom = torch.ones(encGradParams:size())
+   local encGradPrevDenom = torch.zeros(encGradParams:size())
+   local encPrevGrad = torch.zeros(encGradParams:size())
 
    for epoch = 1, opt.epochs do
       print('epoch: ' .. epoch)
@@ -173,16 +200,25 @@ function train(data, valid_data, encoder, decoder, criterion)
            encoder:backward(input_mb, encGrads)
 
            -- Grad norm and update
-           local encGradNorm = encGradParams:norm()
-           local decGradNorm = decGradParams:norm()
-           if encGradNorm > opt.max_grad_norm then
-              encGradParams:mul(opt.max_grad_norm / encGradNorm)
-           end
-           if decGradNorm > opt.max_grad_norm then
-              decGradParams:mul(opt.max_grad_norm / decGradNorm)
-           end
-           encParams:add(encGradParams:mul(-opt.learning_rate))
-           decParams:add(decGradParams:mul(-opt.learning_rate))
+           --local encGradNorm = encGradParams:norm()
+           --local decGradNorm = decGradParams:norm()
+           --if encGradNorm > opt.max_grad_norm then
+           --   encGradParams:mul(opt.max_grad_norm / encGradNorm)
+           --end
+           --if decGradNorm > opt.max_grad_norm then
+           --   decGradParams:mul(opt.max_grad_norm / decGradNorm)
+           --end
+           decGradParams, decGradDenom, decGradPrevDenom = adaptiveGradient(
+               decParams, decGradParams, decGradDenom, decGradPrevDenom, decPrevGrad, opt.adapt)
+           encGradParams, encGradDenom, encGradPrevDenom = adaptiveGradient(
+               encParams, encGradParams, gradDenom, gradPrevDenom, encPrevGrad, opt.adapt)
+           -- Parameter update
+           decParams:addcdiv(-opt.learning_rate, decGradParams, decGradDenom)
+           decPrevGrad:mul(0.9):addcdiv(0.1, decGradParams, decGradDenom)
+           encParams:addcdiv(-opt.learning_rate, encGradParams, encGradDenom)
+           encPrevGrad:mul(0.9):addcdiv(0.1, encGradParams, encGradDenom)
+           --encParams:add(encGradParams:mul(-opt.learning_rate))
+           --decParams:add(decGradParams:mul(-opt.learning_rate))
            encoder:forget()
            decoder:forget()
         end
