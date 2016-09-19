@@ -134,6 +134,14 @@ function train(data, valid_data, encoder, decoder, criterion)
    local encGradDenom = torch.ones(encGradParams:size())
    local encGradPrevDenom = torch.zeros(encGradParams:size())
    local encPrevGrad = torch.zeros(encGradParams:size())
+   if opt.gpu > 0 then
+      decGradDenom = decGradDenom:cuda()
+      decGradPrevDenom = decGradPrevDenom:cuda()
+      decPrevGrad = decPrevGrad:cuda()
+      encGradDenom = encGradDenom:cuda()
+      encGradPrevDenom = encGradPrevDenom:cuda()
+      encPrevGrad = encPrevGrad:cuda()
+   end
 
    for epoch = 1, opt.epochs do
       print('epoch: ' .. epoch)
