@@ -60,7 +60,7 @@ function data.__index(self, idx)
 end
 
 function encodeDecode(data, encoder, decoder, file_name)
-	print("Saving to " ... file_name)
+	print("Saving to " .. file_name)
 	local f = hdf5.open(file_name,'w')
 	for i = 1, data:size() do
 		local sentlen = data.lengths[i]
