@@ -60,6 +60,7 @@ function data.__index(self, idx)
 end
 
 function encodeDecode(data, encoder, decoder, file_name)
+	print("Saving to " ... file_name)
 	local f = hdf5.open(file_name,'w')
 	for i = 1, data:size() do
 		local sentlen = data.lengths[i]
@@ -87,6 +88,7 @@ function encodeDecode(data, encoder, decoder, file_name)
 		predictions = nn.JoinTable(1):forward(predictions)
 		encoder:forget()
 		decoder:forget()
+		f:write(str(sentlen), predictions)
 	end
 	f:close()
 end
@@ -94,15 +96,18 @@ end
 function main()
 	-- Check if GPU
 	if opt.gpu >= 0 then
+		print("Running on GPU...")
 		require 'cutorch'
 		require 'cunn'
 	end
 	-- Load models
 	encoder = torch.load(opt.loadfile .. 'encoder.t7')
 	decoder = torch.load(opt.loadfile .. 'decoder.t7')
+	print("Models loaded!")
 	-- Load data
 	local train_data = data.new(opt, opt.data_file)
 	local valid_data = data.new(opt, opt.val_data_file)
+	print("Data loaded!")
 	-- Check/save results
 	encodeDecode(train_data, encoder, decoder, 'enc_ptb_results_train.hdf5')
 	encodeDecode(valid_data, encoder, decoder, 'enc_ptb_results_valid.hdf5')
