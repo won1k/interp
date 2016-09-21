@@ -1,5 +1,6 @@
 import h5py
 import numpy as np
+import csv
 
 # Load dict
 idx2w = {}
