@@ -105,6 +105,7 @@ function main()
 	-- Check results
 	local train_results = encodeDecode(train_data, encoder, decoder)
 	local valid_results = encodeDecode(valid_data, encoder, decoder)
+	print(train_results:size())
 	-- Save results
 	local train_file = hdf5.open('enc_ptb_results_train.hdf5','w')
 	train_file:write('predictions', train_results)
