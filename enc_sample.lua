@@ -88,7 +88,7 @@ function encodeDecode(data, encoder, decoder, file_name)
 		predictions = nn.JoinTable(1):forward(predictions)
 		encoder:forget()
 		decoder:forget()
-		f:write(str(sentlen), predictions)
+		f:write(tostring(sentlen), predictions)
 	end
 	f:close()
 end
