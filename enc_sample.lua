@@ -101,8 +101,8 @@ function main()
 	local train_data = data.new(opt, opt.data_file)
 	local valid_data = data.new(opt, opt.val_data_file)
 	-- Check results
-	train_results = encodeDecode(train_data, encoder, decoder)
-	valid_results = encodeDecode(valid_data, encoder, decoder)
+	local train_results = encodeDecode(train_data, encoder, decoder)
+	local valid_results = encodeDecode(valid_data, encoder, decoder)
 	-- Save results
 	local train_file = hdf5.open('enc_ptb_results_train.hdf5','w')
 	train_file:write('predictions', train_results)
@@ -112,5 +112,4 @@ function main()
 	test_file:close()
 end
 
-
-
+main()
