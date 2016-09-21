@@ -59,7 +59,8 @@ function data.__index(self, idx)
 	return {input, output}
 end
 
-function encodeDecode(data, encoder, decoder)
+function encodeDecode(data, encoder, decoder, file_name)
+	local f = hdf5.open(file_name,'w')
 	for i = 1, data:size() do
 		local sentlen = data.lengths[i]
 		print("Sentence length: ", sentlen)
@@ -87,7 +88,7 @@ function encodeDecode(data, encoder, decoder)
 		encoder:forget()
 		decoder:forget()
 	end
-	return predictions
+	f:close()
 end
 
 function main()
@@ -102,17 +103,9 @@ function main()
 	-- Load data
 	local train_data = data.new(opt, opt.data_file)
 	local valid_data = data.new(opt, opt.val_data_file)
-	-- Check results
-	local train_results = encodeDecode(train_data, encoder, decoder)
-	local valid_results = encodeDecode(valid_data, encoder, decoder)
-	print(train_results:size())
-	-- Save results
-	local train_file = hdf5.open('enc_ptb_results_train.hdf5','w')
-	train_file:write('predictions', train_results)
-	train_file:close()
-	local test_file = hdf5.open('enc_ptb_results_test.hdf5','w')
-	test_file:write('predictions', valid_results)
-	test_file:close()
+	-- Check/save results
+	encodeDecode(train_data, encoder, decoder, 'enc_ptb_results_train.hdf5')
+	encodeDecode(valid_data, encoder, decoder, 'enc_ptb_results_valid.hdf5')
 end
 
 main()
