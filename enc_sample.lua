@@ -110,7 +110,7 @@ function main()
 	train_file:write('predictions', train_results)
 	train_file:close()
 	local test_file = hdf5.open('enc_ptb_results_test.hdf5','w')
-	test_file:write('predictions', test_results)
+	test_file:write('predictions', valid_results)
 	test_file:close()
 end
 
