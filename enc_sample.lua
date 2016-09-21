@@ -84,6 +84,7 @@ function encodeDecode(data, encoder, decoder)
 		local _, lastPred = decoderOutput[sentlen]:max(2)
 		table.insert(predictions, lastPred:reshape(1,nsent):clone())
 		predictions = nn.JoinTable(1):forward(predictions)
+		encoder:forget()
 		decoder:forget()
 	end
 	return predictions
