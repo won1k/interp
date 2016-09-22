@@ -13,11 +13,19 @@ cmd:option('-loadfile', 'checkpoint_seq/enc_ptb_epoch30.00_33.87', 'filename to 
 opt = cmd:parse(arg)
 
 function forwardConnect(enc, dec)
-   for i = 1, #enc.lstmLayers do
-      local seqlen = #enc.lstmLayers[i].outputs
-      dec.lstmLayers[i].userPrevOutput = nn.rnn.recursiveCopy(dec.lstmLayers[i].userPrevOutput, enc.lstmLayers[i].outputs[seqlen])
-      dec.lstmLayers[i].userPrevCell = nn.rnn.recursiveCopy(dec.lstmLayers[i].userPrevCell, enc.lstmLayers[i].cells[seqlen])
-   end
+	for i = 1, #enc.lstmLayers do
+		local seqlen = #enc.lstmLayers[i].outputs
+		dec.lstmLayers[i].userPrevOutput = nn.rnn.recursiveCopy(dec.lstmLayers[i].userPrevOutput, enc.lstmLayers[i].outputs[seqlen])
+		dec.lstmLayers[i].userPrevCell = nn.rnn.recursiveCopy(dec.lstmLayers[i].userPrevCell, enc.lstmLayers[i].cells[seqlen])
+	end
+end
+
+function addNoise(state, std)
+	d = state:size(1)
+	for i = 1, d do
+		state[i] = state[i] + torch.normal(0, std)
+	end
+	return state
 end
 
 -- Construct the data set.
@@ -69,9 +77,17 @@ function encodeDecode(data, encoder, decoder, file_name)
 		local input, output = d[1], d[2]
         local nsent = input:size(2)
         -- Encoder forward
+        encoder:remember()
         local encoderOutput = encoder:forward(input[1])
+        encoderOutput[1] = encoderOutput[1]:apply(function(x)
+        	return x + torch.random(0,1)
+        	)
         --- Add noise in initial vector... (or maybe in initialization???)
-        encoder:forward(input[{{1, sentlen - 1}}])
+        if sentlen > 2 then
+        	for t = 2, sentlen - 1 do
+        		table.insert(encoderOutput, encoder:forward(input[t])[1])
+        	end
+        end
         -- Decoder forward
 		forwardConnect(encoder, decoder)
 		local decoderInput = { input[{{sentlen}}] }
@@ -111,8 +127,8 @@ function main()
 	local valid_data = data.new(opt, opt.val_data_file)
 	print("Data loaded!")
 	-- Check/save results
-	encodeDecode(train_data, encoder, decoder, 'enc_ptb_results_train.hdf5')
-	encodeDecode(valid_data, encoder, decoder, 'enc_ptb_results_valid.hdf5')
+	encodeDecode(train_data, encoder, decoder, 'enc_ptb_results_noise_train.hdf5')
+	encodeDecode(valid_data, encoder, decoder, 'enc_ptb_results_noise_valid.hdf5')
 end
 
 main()
