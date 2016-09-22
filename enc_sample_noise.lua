@@ -78,7 +78,7 @@ function encodeDecode(data, encoder, decoder, file_name)
         local nsent = input:size(2)
         -- Encoder forward
         encoder:remember()
-        local encoderOutput = encoder:forward(input[{{1]}})
+        local encoderOutput = encoder:forward(input[{{1]}}])
         encoderOutput[1] = encoderOutput[1]:apply(function(x) return x + torch.random(0,1) end)
         --- Add noise in initial vector... (or maybe in initialization???)
         if sentlen > 2 then
