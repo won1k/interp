@@ -79,7 +79,12 @@ function encodeDecode(data, encoder, decoder, file_name)
         -- Encoder forward
         encoder:remember()
         local encoderOutput = {encoder:forward(input[{{1}}])[1]:clone()}
-        encoderOutput[1] = encoderOutput[1]:apply(function(x) return x + torch.random(0,5) end)
+        -- Apply noise
+        for i = 1, #enc.lstmLayers do
+			local seqlen = #enc.lstmLayers[i].outputs
+			enc.lstmLayers[i].outputs[seqlen]:apply(function(x) return x + torch.random(0,5) end)
+			--enc.lstmLayers[i].cells[seqlen]
+		end
         --- Add noise in initial vector... (or maybe in initialization???)
         if sentlen > 2 then
         	for t = 2, sentlen - 1 do
