@@ -79,7 +79,7 @@ function encodeDecode(data, encoder, decoder, file_name)
         -- Encoder forward
         encoder:remember()
         local encoderOutput = {encoder:forward(input[{{1}}])[1]:clone()}
-        encoderOutput[1] = encoderOutput[1]:apply(function(x) return x + torch.random(0,1) end)
+        encoderOutput[1] = encoderOutput[1]:apply(function(x) return x + torch.random(0,5) end)
         --- Add noise in initial vector... (or maybe in initialization???)
         if sentlen > 2 then
         	for t = 2, sentlen - 1 do
@@ -125,8 +125,8 @@ function main()
 	local valid_data = data.new(opt, opt.val_data_file)
 	print("Data loaded!")
 	-- Check/save results
-	encodeDecode(train_data, encoder, decoder, 'enc_ptb_results_noise_train.hdf5')
-	encodeDecode(valid_data, encoder, decoder, 'enc_ptb_results_noise_valid.hdf5')
+	encodeDecode(train_data, encoder, decoder, 'enc_ptb_results_noise5_train.hdf5')
+	encodeDecode(valid_data, encoder, decoder, 'enc_ptb_results_noise5_valid.hdf5')
 end
 
 main()
