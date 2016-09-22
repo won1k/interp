@@ -82,7 +82,7 @@ function encodeDecode(data, encoder, decoder, file_name)
         -- Apply noise
         for i = 1, #encoder.lstmLayers do
 			local seqlen = #encoder.lstmLayers[i].outputs
-			encoder.lstmLayers[i].outputs[seqlen]:apply(function(x) return x + torch.random(0,5) end)
+			encoder.lstmLayers[i].outputs[seqlen]:apply(function(x) return x + torch.random(0,1) end)
 			--enc.lstmLayers[i].cells[seqlen]
 		end
         --- Add noise in initial vector... (or maybe in initialization???)
