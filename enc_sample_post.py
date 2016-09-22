@@ -12,8 +12,8 @@ with open('convert_seq/ptb_seq.dict','r') as f:
 	print "Dict loaded!"
 
 # Load/translate results
-with open('enc_ptb_results_train_words.txt','w') as f:
-	train = h5py.File('enc_ptb_results_train.hdf5', 'r')
+with open('enc_ptb_results_noise_train_words.txt','w') as f:
+	train = h5py.File('enc_ptb_results_noise_train.hdf5', 'r')
 	for key in train.keys():
 		indices = np.transpose(train[key])
 		for row in indices:
@@ -23,8 +23,8 @@ with open('enc_ptb_results_train_words.txt','w') as f:
 	train.close()
 	print "Train file translated!"
 
-with open('enc_ptb_results_valid_words.txt','w') as f:
-	test = h5py.File('enc_ptb_results_valid.hdf5', 'r')
+with open('enc_ptb_results_noise_valid_words.txt','w') as f:
+	test = h5py.File('enc_ptb_results_noise_valid.hdf5', 'r')
 	for key in test.keys():
 		indices = np.transpose(test[key])
 		for row in indices:
