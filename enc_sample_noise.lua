@@ -86,6 +86,7 @@ function encodeDecode(data, encoder, decoder, file_name)
         		table.insert(encoderOutput, encoder:forward(input[t])[1])
         	end
         end
+        print(encoderOutput)
         -- Decoder forward
 		forwardConnect(encoder, decoder)
 		local decoderInput = { input[{{sentlen}}] }
