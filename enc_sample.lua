@@ -70,7 +70,6 @@ function encodeDecode(data, encoder, decoder, file_name)
         local nsent = input:size(2)
         -- Encoder forward
         local encoderOutput = encoder:forward(input[{{1, sentlen - 1}}])
-        print(encoderOutput)
         -- Decoder forward
 		forwardConnect(encoder, decoder)
 		local decoderInput = { input[{{sentlen}}] }

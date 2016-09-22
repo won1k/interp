@@ -83,6 +83,7 @@ function encodeDecode(data, encoder, decoder, file_name)
         --- Add noise in initial vector... (or maybe in initialization???)
         if sentlen > 2 then
         	for t = 2, sentlen - 1 do
+        		print(input[{{t}}]:size())
         		table.insert(encoderOutput, encoder:forward(input[{{t}}])[1])
         	end
         end
