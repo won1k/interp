@@ -80,7 +80,7 @@ function encodeDecode(data, encoder, decoder, file_name)
         encoder:remember()
         local encoderOutput = {encoder:forward(input[{{1}}])[1]:clone()}
         -- Apply noise
-        for i = 1, #enc.lstmLayers do
+        for i = 1, #encoder.lstmLayers do
 			local seqlen = #encoder.lstmLayers[i].outputs
 			encoder.lstmLayers[i].outputs[seqlen]:apply(function(x) return x + torch.random(0,5) end)
 			--enc.lstmLayers[i].cells[seqlen]
